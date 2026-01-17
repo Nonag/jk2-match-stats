@@ -10,12 +10,12 @@ export default function HomePage() {
   // Calculate stats from matches
   const totalMatches = matches.length;
   const totalCaptures = matches.reduce(
-    (sum, m) => sum + m.redScore + m.blueScore,
+    (sum, match) => sum + match.redScore + match.blueScore,
     0
   );
   const avgMatchDuration =
     totalMatches > 0
-      ? Math.round(matches.reduce((sum, m) => sum + m.duration, 0) / totalMatches)
+      ? Math.round(matches.reduce((sum, match) => sum + match.duration, 0) / totalMatches)
       : 0;
 
   // For unique players, we'd need actual data - using a placeholder based on matches

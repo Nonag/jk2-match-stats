@@ -18,8 +18,8 @@ export function usePlayers() {
       }
       const data = await response.json();
       setPlayers(data);
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error("Unknown error"));
+    } catch (caughtError) {
+      setError(caughtError instanceof Error ? caughtError : new Error("Unknown error"));
     } finally {
       setLoading(false);
     }
@@ -54,8 +54,8 @@ export function useCreatePlayer() {
       }
 
       return data;
-    } catch (err) {
-      const error = err instanceof Error ? err : new Error("Unknown error");
+    } catch (caughtError) {
+      const error = caughtError instanceof Error ? caughtError : new Error("Unknown error");
       setError(error);
       return null;
     } finally {
@@ -87,8 +87,8 @@ export function useLinkPlayer() {
       }
 
       return true;
-    } catch (err) {
-      const error = err instanceof Error ? err : new Error("Unknown error");
+    } catch (caughtError) {
+      const error = caughtError instanceof Error ? caughtError : new Error("Unknown error");
       setError(error);
       return false;
     } finally {
@@ -113,8 +113,8 @@ export function useLinkPlayer() {
       }
 
       return true;
-    } catch (err) {
-      const error = err instanceof Error ? err : new Error("Unknown error");
+    } catch (caughtError) {
+      const error = caughtError instanceof Error ? caughtError : new Error("Unknown error");
       setError(error);
       return false;
     } finally {

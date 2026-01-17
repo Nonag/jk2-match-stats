@@ -45,7 +45,7 @@ export interface ParsedPlayer {
   score: number;
   captures: number;
   returns: number;
-  baseCaptures: number;
+  baseCleanKills: number;
   assists: number;
   flagHold: number;
   flagGrabs: number;
@@ -63,36 +63,36 @@ export function parseFileName(fileName: string): {
 } {
   // Example: 2025-12-17_22_56_01_ctf_yavin_no_outside_192.223.24.74_28070_14_7NA2_NWH_14_CTF_NWH_TG_INTERMISSION_SCORES.csv
   const baseName = fileName.replace(".csv", "");
-  
+
   // Extract date: 2025-12-17_22_56_01
   const dateMatch = baseName.match(/^(\d{4}-\d{2}-\d{2})_(\d{2})_(\d{2})_(\d{2})/);
   if (!dateMatch) {
     throw new Error("Invalid filename format: cannot parse date");
   }
-  
+
   const [, datePart, hours, minutes, seconds] = dateMatch;
   const date = new Date(`${datePart}T${hours}:${minutes}:${seconds}`);
-  
+
   // Remove date prefix
   const afterDate = baseName.substring(dateMatch[0].length + 1); // +1 for the underscore
-  
+
   // Extract server IP: look for IP pattern like 192.223.24.74
   const ipMatch = afterDate.match(/(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})/);
   if (!ipMatch) {
     throw new Error("Invalid filename format: cannot parse server IP");
   }
-  
+
   const serverIp = ipMatch[1];
   const ipIndex = afterDate.indexOf(serverIp);
-  
+
   // Map name is everything before the IP
   const mapName = afterDate.substring(0, ipIndex - 1); // -1 for the underscore before IP
-  
+
   // Server name: extract from parts after port
   // Format: IP_PORT_something_SERVERNAME_...
   const afterIp = afterDate.substring(ipIndex + serverIp.length + 1); // +1 for underscore
   const parts = afterIp.split("_");
-  
+
   // Skip port (first part), then get server identifier
   // Looking for patterns like "14_7NA2_NWH" -> server name parts
   // The pattern seems to be: PORT_NUMBER_SERVERCODE_SERVERNAME_...
@@ -102,22 +102,22 @@ export function parseFileName(fileName: string): {
     // Typically it's something like NWH (part 3 or 4)
     serverName = parts.slice(1, 4).join(" ");
   }
-  
+
   return { date, mapName, serverIp, serverName };
 }
 
 export function parseCSV(csvContent: string, fileName: string): ParsedMatchData {
   const { date, mapName, serverIp, serverName } = parseFileName(fileName);
-  
+
   const result = Papa.parse<CSVPlayerRow>(csvContent, {
     header: true,
     skipEmptyLines: true,
   });
-  
+
   if (result.errors.length > 0) {
     console.warn("CSV parsing errors:", result.errors);
   }
-  
+
   const players: ParsedPlayer[] = result.data
     .filter((row) => row["CURRENT-TEAM"] && row["NAME-CLEAN"])
     .map((row) => ({
@@ -128,7 +128,7 @@ export function parseCSV(csvContent: string, fileName: string): ParsedMatchData 
       score: parseInt(row["SCORE-SUM"]) || 0,
       captures: parseInt(row["CAPTURES-SUM"]) || 0,
       returns: parseInt(row["RETURNS-SUM"]) || 0,
-      baseCaptures: parseInt(row["BC-SUM"]) || 0,
+      baseCleanKills: parseInt(row["BC-SUM"]) || 0,
       assists: parseInt(row["ASSISTS-SUM"]) || 0,
       flagHold: parseInt(row["FLAGHOLD-SUM"]) || 0,
       flagGrabs: parseInt(row["FLAGGRABS-SUM"]) || 0,
@@ -137,7 +137,7 @@ export function parseCSV(csvContent: string, fileName: string): ParsedMatchData 
       ping: parseInt(row["PING-CURRENT"]) || parseInt(row["PING-MEAN"]) || 0,
       time: parseInt(row["TIME-SUM"]) || 0,
     }));
-  
+
   return {
     date,
     mapName,
@@ -153,14 +153,14 @@ export function calculateMatchStats(players: ParsedPlayer[]): {
   blueScore: number;
   duration: number;
 } {
-  const redPlayers = players.filter((p) => p.team === "Red");
-  const bluePlayers = players.filter((p) => p.team === "Blue");
-  
-  const redScore = redPlayers.reduce((sum, p) => sum + p.captures, 0);
-  const blueScore = bluePlayers.reduce((sum, p) => sum + p.captures, 0);
-  
+  const redPlayers = players.filter((player) => player.team === "Red");
+  const bluePlayers = players.filter((player) => player.team === "Blue");
+
+  const redScore = redPlayers.reduce((sum, player) => sum + player.captures, 0);
+  const blueScore = bluePlayers.reduce((sum, player) => sum + player.captures, 0);
+
   // Duration is the longest time of any player
-  const duration = Math.max(...players.map((p) => p.time), 0);
-  
+  const duration = Math.max(...players.map((player) => player.time), 0);
+
   return { redScore, blueScore, duration };
 }

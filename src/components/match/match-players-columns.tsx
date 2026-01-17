@@ -6,18 +6,21 @@ import { ArrowUpDown } from "lucide-react";
 import type { MatchPlayerDetail } from "@/lib/db/match";
 
 export const matchPlayersColumns: ColumnDef<MatchPlayerDetail>[] = [
-  {
-    accessorKey: "clientNumber",
-    header: "#",
-    cell: ({ row }) => (
-      <span className="text-muted-foreground">
-        {row.getValue("clientNumber")}
-      </span>
-    ),
-  },
+  // Fixed columns - enableHiding: false
   {
     accessorKey: "nameClean",
-    header: "Player",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Player
+          <ArrowUpDown />
+        </Button>
+      );
+    },
+    enableHiding: false,
     cell: ({ row }) => {
       const nameClean = row.getValue("nameClean") as string;
       const playerPrimaryName = row.original.playerPrimaryName;
@@ -46,7 +49,11 @@ export const matchPlayersColumns: ColumnDef<MatchPlayerDetail>[] = [
         </Button>
       );
     },
-    cell: ({ row }) => <div>{row.getValue("score")}</div>,
+    enableHiding: false,
+    cell: ({ row }) => {
+      const value = row.getValue("score") as number;
+      return <div className={value === 0 ? "text-muted-foreground" : ""}>{value}</div>;
+    },
   },
   {
     accessorKey: "captures",
@@ -61,63 +68,191 @@ export const matchPlayersColumns: ColumnDef<MatchPlayerDetail>[] = [
         </Button>
       );
     },
-    cell: ({ row }) => (
-      <div>{row.getValue("captures")}</div>
-    ),
+    enableHiding: false,
+    cell: ({ row }) => {
+      const value = row.getValue("captures") as number;
+      return <div className={value === 0 ? "text-muted-foreground" : ""}>{value}</div>;
+    },
   },
   {
     accessorKey: "returns",
-    header: "Ret",
-    cell: ({ row }) => <div>{row.getValue("returns")}</div>,
-  },
-  {
-    accessorKey: "baseCaptures",
-    header: "BC",
-    cell: ({ row }) => <div>{row.getValue("baseCaptures")}</div>,
-  },
-  {
-    accessorKey: "assists",
-    header: "Ast",
-    cell: ({ row }) => <div>{row.getValue("assists")}</div>,
-  },
-  {
-    accessorKey: "kills",
     header: ({ column }) => {
       return (
         <Button
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          K
+          Ret
           <ArrowUpDown />
         </Button>
       );
     },
-    cell: ({ row }) => <div>{row.getValue("kills")}</div>,
+    enableHiding: false,
+    cell: ({ row }) => {
+      const value = row.getValue("returns") as number;
+      return <div className={value === 0 ? "text-muted-foreground" : ""}>{value}</div>;
+    },
   },
   {
-    accessorKey: "deaths",
-    header: "D",
-    cell: ({ row }) => <div>{row.getValue("deaths")}</div>,
+    accessorKey: "baseCleanKills",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          BC
+          <ArrowUpDown />
+        </Button>
+      );
+    },
+    enableHiding: false,
+    cell: ({ row }) => {
+      const value = row.getValue("baseCleanKills") as number;
+      return <div className={value === 0 ? "text-muted-foreground" : ""}>{value}</div>;
+    },
+  },
+
+  // Optional columns - default shown
+  {
+    accessorKey: "flagHold",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          FH
+          <ArrowUpDown />
+        </Button>
+      );
+    },
+    cell: ({ row }) => {
+      const milliseconds = row.getValue("flagHold") as number;
+      const formatted = new Date(milliseconds).toISOString().slice(11, 19);
+      return <div className={milliseconds === 0 ? "text-muted-foreground" : ""}>{formatted}</div>;
+    },
   },
   {
-    id: "kd",
-    header: "K/D",
+    accessorKey: "flagGrabs",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          FG
+          <ArrowUpDown />
+        </Button>
+      );
+    },
+    cell: ({ row }) => {
+      const value = row.getValue("flagGrabs") as number;
+      return <div className={value === 0 ? "text-muted-foreground" : ""}>{value}</div>;
+    },
+  },
+  {
+    id: "kdr",
+    accessorFn: (row) => {
+      return row.deaths > 0 ? row.kills / row.deaths : row.kills;
+    },
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          K/D/R
+          <ArrowUpDown />
+        </Button>
+      );
+    },
     cell: ({ row }) => {
       const deaths = row.original.deaths;
       const kills = row.original.kills;
-      const kd = deaths > 0 ? (kills / deaths).toFixed(2) : kills.toFixed(2);
-      return <div>{kd}</div>;
+      const ratio = deaths > 0 ? (kills / deaths).toFixed(2) : kills.toFixed(2);
+      const none = kills === 0 && deaths === 0;
+      return (
+        <span className={none ? "text-muted-foreground" : ""}>
+          <span>{kills}/{deaths}</span>
+          <span className="text-muted-foreground ml-1">({ratio})</span>
+        </span>
+      );
+    },
+  },
+
+  // Optional columns - default hidden
+  {
+    accessorKey: "clientNumber",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          #
+          <ArrowUpDown />
+        </Button>
+      );
+    },
+    cell: ({ row }) => (
+      <span>
+        {row.getValue("clientNumber")}
+      </span>
+    ),
+  },
+  {
+    accessorKey: "assists",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Ast
+          <ArrowUpDown />
+        </Button>
+      );
+    },
+    cell: ({ row }) => {
+      const value = row.getValue("assists") as number;
+      return <div className={value === 0 ? "text-muted-foreground" : ""}>{value}</div>;
     },
   },
   {
     accessorKey: "time",
-    header: "Time",
-    cell: ({ row }) => <div>{row.getValue("time")}m</div>,
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Time
+          <ArrowUpDown />
+        </Button>
+      );
+    },
+    cell: ({ row }) => {
+      const value = row.getValue("time") as number;
+      return <div className={value === 0 ? "text-muted-foreground" : ""}>{value}m</div>;
+    },
   },
   {
     accessorKey: "ping",
-    header: "Ping",
-    cell: ({ row }) => <div>{row.getValue("ping")}</div>,
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Ping
+          <ArrowUpDown />
+        </Button>
+      );
+    },
+    cell: ({ row }) => {
+      const value = row.getValue("ping") as number;
+      return <div className={value === 0 ? "text-muted-foreground" : ""}>{value}</div>;
+    },
   },
 ];

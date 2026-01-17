@@ -18,8 +18,8 @@ export function useMatches() {
       }
       const data = await response.json();
       setMatches(data);
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error("Unknown error"));
+    } catch (caughtError) {
+      setError(caughtError instanceof Error ? caughtError : new Error("Unknown error"));
     } finally {
       setLoading(false);
     }
@@ -49,8 +49,8 @@ export function useMatch(id: string) {
       }
       const data = await response.json();
       setMatch(data);
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error("Unknown error"));
+    } catch (caughtError) {
+      setError(caughtError instanceof Error ? caughtError : new Error("Unknown error"));
     } finally {
       setLoading(false);
     }
@@ -87,8 +87,8 @@ export function useImportMatch() {
       }
 
       return { success: true, matchId: data.matchId };
-    } catch (err) {
-      const error = err instanceof Error ? err : new Error("Unknown error");
+    } catch (caughtError) {
+      const error = caughtError instanceof Error ? caughtError : new Error("Unknown error");
       setError(error);
       return { success: false };
     } finally {
@@ -118,8 +118,8 @@ export function useDeleteMatch() {
       }
 
       return true;
-    } catch (err) {
-      const error = err instanceof Error ? err : new Error("Unknown error");
+    } catch (caughtError) {
+      const error = caughtError instanceof Error ? caughtError : new Error("Unknown error");
       setError(error);
       return false;
     } finally {

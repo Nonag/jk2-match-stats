@@ -30,11 +30,11 @@ export async function getAllPlayers(): Promise<PlayerWithAliases[]> {
     orderBy: { primaryName: "asc" },
   });
 
-  return players.map((p) => ({
-    id: p.id,
-    primaryName: p.primaryName,
-    aliases: p.aliases,
-    matchCount: p._count.matchPlayers,
+  return players.map((player) => ({
+    id: player.id,
+    primaryName: player.primaryName,
+    aliases: player.aliases,
+    matchCount: player._count.matchPlayers,
   }));
 }
 

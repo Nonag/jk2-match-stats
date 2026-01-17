@@ -33,7 +33,7 @@ export interface MatchPlayerDetail {
   score: number;
   captures: number;
   returns: number;
-  baseCaptures: number;
+  baseCleanKills: number;
   assists: number;
   flagHold: number;
   flagGrabs: number;
@@ -94,25 +94,25 @@ export async function getMatchById(id: string): Promise<MatchDetail | null> {
     blueScore: match.blueScore,
     duration: match.duration,
     fileName: match.fileName,
-    players: match.matchPlayers.map((mp) => ({
-      id: mp.id,
-      clientNumber: mp.clientNumber,
-      team: mp.team,
-      nameClean: mp.nameClean,
-      nameRaw: mp.nameRaw,
-      score: mp.score,
-      captures: mp.captures,
-      returns: mp.returns,
-      baseCaptures: mp.baseCaptures,
-      assists: mp.assists,
-      flagHold: mp.flagHold,
-      flagGrabs: mp.flagGrabs,
-      kills: mp.kills,
-      deaths: mp.deaths,
-      ping: mp.ping,
-      time: mp.time,
-      playerId: mp.playerId,
-      playerPrimaryName: mp.player?.primaryName ?? null,
+    players: match.matchPlayers.map((matchPlayer) => ({
+      id: matchPlayer.id,
+      clientNumber: matchPlayer.clientNumber,
+      team: matchPlayer.team,
+      nameClean: matchPlayer.nameClean,
+      nameRaw: matchPlayer.nameRaw,
+      score: matchPlayer.score,
+      captures: matchPlayer.captures,
+      returns: matchPlayer.returns,
+      baseCleanKills: matchPlayer.baseCleanKills,
+      assists: matchPlayer.assists,
+      flagHold: matchPlayer.flagHold,
+      flagGrabs: matchPlayer.flagGrabs,
+      kills: matchPlayer.kills,
+      deaths: matchPlayer.deaths,
+      ping: matchPlayer.ping,
+      time: matchPlayer.time,
+      playerId: matchPlayer.playerId,
+      playerPrimaryName: matchPlayer.player?.primaryName ?? null,
     })),
   };
 }
@@ -147,7 +147,7 @@ export async function importMatch(data: ParsedMatchData): Promise<{ id: string }
           score: player.score,
           captures: player.captures,
           returns: player.returns,
-          baseCaptures: player.baseCaptures,
+          baseCleanKills: player.baseCleanKills,
           assists: player.assists,
           flagHold: player.flagHold,
           flagGrabs: player.flagGrabs,

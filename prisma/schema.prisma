@@ -57,7 +57,7 @@ model MatchPlayer {
   score           Int
   captures        Int
   returns         Int
-  baseCaptures    Int      // BC
+  baseCleanKills  Int      // BC - base clean kills
   assists         Int
   flagHold        Int
   flagGrabs       Int

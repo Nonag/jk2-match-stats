@@ -43,7 +43,7 @@ interface ParsedPlayer {
   score: number;
   captures: number;
   returns: number;
-  baseCaptures: number;
+  baseCleanKills: number;
   assists: number;
   flagHold: number;
   flagGrabs: number;
@@ -114,7 +114,7 @@ function parseCSV(csvContent: string, fileName: string) {
       score: parseInt(row["SCORE-SUM"]) || 0,
       captures: parseInt(row["CAPTURES-SUM"]) || 0,
       returns: parseInt(row["RETURNS-SUM"]) || 0,
-      baseCaptures: parseInt(row["BC-SUM"]) || 0,
+      baseCleanKills: parseInt(row["BC-SUM"]) || 0,
       assists: parseInt(row["ASSISTS-SUM"]) || 0,
       flagHold: parseInt(row["FLAGHOLD-SUM"]) || 0,
       flagGrabs: parseInt(row["FLAGGRABS-SUM"]) || 0,
@@ -167,7 +167,7 @@ async function main() {
     return;
   }
 
-  const csvFiles = fs.readdirSync(sampleDataDir).filter((f) => f.endsWith(".csv"));
+  const csvFiles = fs.readdirSync(sampleDataDir).filter((fileName) => fileName.endsWith(".csv"));
 
   if (csvFiles.length === 0) {
     console.log("Warning: No CSV files found in sample-data directory");
@@ -187,13 +187,13 @@ async function main() {
     const matchData = parseCSV(csvContent, csvFile);
 
     // Calculate team scores and duration
-    const redPlayers = matchData.players.filter((p) => p.team === "Red");
-    const bluePlayers = matchData.players.filter((p) => p.team === "Blue");
+    const redPlayers = matchData.players.filter((player) => player.team === "Red");
+    const bluePlayers = matchData.players.filter((player) => player.team === "Blue");
 
-    const redScore = redPlayers.reduce((sum, p) => sum + p.captures, 0);
-    const blueScore = bluePlayers.reduce((sum, p) => sum + p.captures, 0);
+    const redScore = redPlayers.reduce((sum, player) => sum + player.captures, 0);
+    const blueScore = bluePlayers.reduce((sum, player) => sum + player.captures, 0);
 
-    const maxTime = Math.max(...matchData.players.map((p) => p.time));
+    const maxTime = Math.max(...matchData.players.map((player) => player.time));
     const duration = maxTime > 0 ? maxTime : 22; // Default to 22 if no time data
 
     // Create the match
@@ -216,7 +216,7 @@ async function main() {
             score: player.score,
             captures: player.captures,
             returns: player.returns,
-            baseCaptures: player.baseCaptures,
+            baseCleanKills: player.baseCleanKills,
             assists: player.assists,
             flagHold: player.flagHold,
             flagGrabs: player.flagGrabs,
@@ -238,7 +238,7 @@ async function main() {
   await prisma.$disconnect();
 }
 
-main().catch((e) => {
-  console.error("Seed failed:", e);
+main().catch((error) => {
+  console.error("Seed failed:", error);
   process.exit(1);
 });

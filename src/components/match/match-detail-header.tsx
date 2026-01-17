@@ -20,15 +20,6 @@ function formatDate(date: Date | string) {
   });
 }
 
-function formatMapName(mapName: string) {
-  return mapName
-    .replace(/^ctf_/, "")
-    .replace(/_/g, " ")
-    .split(" ")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
-}
-
 function formatDuration(minutes: number) {
   if (minutes < 60) {
     return `${minutes} minutes`;
@@ -48,7 +39,7 @@ export function MatchDetailHeader({ match }: MatchDetailHeaderProps) {
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-2xl">
-            {formatMapName(match.mapName)}
+            {match.mapName}
           </CardTitle>
           <Badge variant="outline">{formatDuration(match.duration)}</Badge>
         </div>

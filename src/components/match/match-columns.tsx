@@ -26,15 +26,6 @@ function formatDuration(minutes: number) {
   return `${hours}h ${mins}m`;
 }
 
-function formatMapName(mapName: string) {
-  return mapName
-    .replace(/^ctf_/, "")
-    .replace(/_/g, " ")
-    .split(" ")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
-}
-
 export const matchColumns: ColumnDef<MatchSummary>[] = [
   {
     accessorKey: "date",
@@ -64,9 +55,9 @@ export const matchColumns: ColumnDef<MatchSummary>[] = [
         </Button>
       );
     },
-    cell: ({ row }) => formatMapName(row.getValue("mapName")),
+    cell: ({ row }) => row.getValue("mapName"),
     filterFn: (row, id, value) => {
-      const mapName = formatMapName(row.getValue(id) as string).toLowerCase();
+      const mapName = (row.getValue(id) as string).toLowerCase();
       return mapName.includes(value.toLowerCase());
     },
   },
