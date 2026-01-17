@@ -1,7 +1,7 @@
 "use client";
 
 import { SectionCards } from "@/components/layout";
-import { MatchCSVImportDialog, MatchTable } from "@/components/match";
+import { MatchTable } from "@/components/match";
 import { useMatches } from "@/hooks/use-matches";
 
 export default function HomePage() {

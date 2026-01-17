@@ -49,7 +49,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               className="data-[slot=sidebar-menu-button]:p-1.5!"
             >
               <Link href="/">
-                <Swords className="size-5" />
                 <span className="text-base font-semibold">JK2 Match Stats</span>
               </Link>
             </SidebarMenuButton>

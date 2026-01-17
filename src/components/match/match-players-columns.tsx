@@ -1,25 +1,57 @@
 "use client";
 
-import { ColumnDef } from "@tanstack/react-table";
+import { Column, ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
-import { ArrowUpDown } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
 import type { MatchPlayerDetail } from "@/lib/db/match";
+
+interface SortableHeaderProps {
+  column: Column<MatchPlayerDetail, unknown>;
+  label: string;
+}
+
+function SortableHeader({ column, label }: SortableHeaderProps) {
+  const sorted = column.getIsSorted();
+
+  const handleClick = (e: React.MouseEvent) => {
+    if (sorted === "asc") {
+      // Third click: remove from sort
+      column.clearSorting();
+    } else if (sorted === "desc") {
+      // Second click: change to asc
+      column.toggleSorting(false, e.shiftKey);
+    } else {
+      // First click: sort desc
+      column.toggleSorting(true, e.shiftKey);
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-1">
+      <span>{label}</span>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-6 w-6"
+        onClick={handleClick}
+      >
+        {sorted === "asc" ? (
+          <ArrowUp className="h-3.5 w-3.5" />
+        ) : sorted === "desc" ? (
+          <ArrowDown className="h-3.5 w-3.5" />
+        ) : (
+          <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground" />
+        )}
+      </Button>
+    </div>
+  );
+}
 
 export const matchPlayersColumns: ColumnDef<MatchPlayerDetail>[] = [
   // Fixed columns - enableHiding: false
   {
     accessorKey: "nameClean",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Player
-          <ArrowUpDown />
-        </Button>
-      );
-    },
+    header: ({ column }) => <SortableHeader column={column} label="Player" />,
     enableHiding: false,
     cell: ({ row }) => {
       const nameClean = row.getValue("nameClean") as string;
@@ -37,117 +69,57 @@ export const matchPlayersColumns: ColumnDef<MatchPlayerDetail>[] = [
     },
   },
   {
-    accessorKey: "score",
-    header: ({ column }) => {
-      return (
-        <Button
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          variant="ghost"
-        >
-          Score
-          <ArrowUpDown />
-        </Button>
-      );
-    },
+    accessorKey: "scoreSum",
+    header: ({ column }) => <SortableHeader column={column} label="Score" />,
     enableHiding: false,
     cell: ({ row }) => {
-      const value = row.getValue("score") as number;
+      const value = row.getValue("scoreSum") as number;
       return <div className={value === 0 ? "text-muted-foreground" : ""}>{value}</div>;
     },
   },
   {
-    accessorKey: "captures",
-    header: ({ column }) => {
-      return (
-        <Button
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          variant="ghost"
-        >
-          Caps
-          <ArrowUpDown />
-        </Button>
-      );
-    },
+    accessorKey: "capturesSum",
+    header: ({ column }) => <SortableHeader column={column} label="Caps" />,
     enableHiding: false,
     cell: ({ row }) => {
-      const value = row.getValue("captures") as number;
+      const value = row.getValue("capturesSum") as number;
       return <div className={value === 0 ? "text-muted-foreground" : ""}>{value}</div>;
     },
   },
   {
-    accessorKey: "returns",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Ret
-          <ArrowUpDown />
-        </Button>
-      );
-    },
+    accessorKey: "returnsSum",
+    header: ({ column }) => <SortableHeader column={column} label="Ret" />,
     enableHiding: false,
     cell: ({ row }) => {
-      const value = row.getValue("returns") as number;
+      const value = row.getValue("returnsSum") as number;
       return <div className={value === 0 ? "text-muted-foreground" : ""}>{value}</div>;
     },
   },
   {
-    accessorKey: "baseCleanKills",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          BC
-          <ArrowUpDown />
-        </Button>
-      );
-    },
+    accessorKey: "bcSum",
+    header: ({ column }) => <SortableHeader column={column} label="BC" />,
     enableHiding: false,
     cell: ({ row }) => {
-      const value = row.getValue("baseCleanKills") as number;
+      const value = row.getValue("bcSum") as number;
       return <div className={value === 0 ? "text-muted-foreground" : ""}>{value}</div>;
     },
   },
 
   // Optional columns - default shown
   {
-    accessorKey: "flagHold",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          FH
-          <ArrowUpDown />
-        </Button>
-      );
-    },
+    accessorKey: "flagHoldSum",
+    header: ({ column }) => <SortableHeader column={column} label="FH" />,
     cell: ({ row }) => {
-      const milliseconds = row.getValue("flagHold") as number;
+      const milliseconds = row.getValue("flagHoldSum") as number;
       const formatted = new Date(milliseconds).toISOString().slice(11, 19);
       return <div className={milliseconds === 0 ? "text-muted-foreground" : ""}>{formatted}</div>;
     },
   },
   {
-    accessorKey: "flagGrabs",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          FG
-          <ArrowUpDown />
-        </Button>
-      );
-    },
+    accessorKey: "flagGrabsSum",
+    header: ({ column }) => <SortableHeader column={column} label="FG" />,
     cell: ({ row }) => {
-      const value = row.getValue("flagGrabs") as number;
+      const value = row.getValue("flagGrabsSum") as number;
       return <div className={value === 0 ? "text-muted-foreground" : ""}>{value}</div>;
     },
   },
@@ -156,17 +128,7 @@ export const matchPlayersColumns: ColumnDef<MatchPlayerDetail>[] = [
     accessorFn: (row) => {
       return row.deaths > 0 ? row.kills / row.deaths : row.kills;
     },
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          K/D/R
-          <ArrowUpDown />
-        </Button>
-      );
-    },
+    header: ({ column }) => <SortableHeader column={column} label="K/D/R" />,
     cell: ({ row }) => {
       const deaths = row.original.deaths;
       const kills = row.original.kills;
@@ -184,17 +146,7 @@ export const matchPlayersColumns: ColumnDef<MatchPlayerDetail>[] = [
   // Optional columns - default hidden
   {
     accessorKey: "clientNumber",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          #
-          <ArrowUpDown />
-        </Button>
-      );
-    },
+    header: ({ column }) => <SortableHeader column={column} label="#" />,
     cell: ({ row }) => (
       <span>
         {row.getValue("clientNumber")}
@@ -202,56 +154,26 @@ export const matchPlayersColumns: ColumnDef<MatchPlayerDetail>[] = [
     ),
   },
   {
-    accessorKey: "assists",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Ast
-          <ArrowUpDown />
-        </Button>
-      );
-    },
+    accessorKey: "assistsSum",
+    header: ({ column }) => <SortableHeader column={column} label="Ast" />,
     cell: ({ row }) => {
-      const value = row.getValue("assists") as number;
+      const value = row.getValue("assistsSum") as number;
       return <div className={value === 0 ? "text-muted-foreground" : ""}>{value}</div>;
     },
   },
   {
-    accessorKey: "time",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Time
-          <ArrowUpDown />
-        </Button>
-      );
-    },
+    accessorKey: "timeSum",
+    header: ({ column }) => <SortableHeader column={column} label="Time" />,
     cell: ({ row }) => {
-      const value = row.getValue("time") as number;
+      const value = row.getValue("timeSum") as number;
       return <div className={value === 0 ? "text-muted-foreground" : ""}>{value}m</div>;
     },
   },
   {
-    accessorKey: "ping",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Ping
-          <ArrowUpDown />
-        </Button>
-      );
-    },
+    accessorKey: "pingMean",
+    header: ({ column }) => <SortableHeader column={column} label="Ping" />,
     cell: ({ row }) => {
-      const value = row.getValue("ping") as number;
+      const value = row.getValue("pingMean") as number;
       return <div className={value === 0 ? "text-muted-foreground" : ""}>{value}</div>;
     },
   },

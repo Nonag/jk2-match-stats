@@ -38,50 +38,55 @@ import type { MatchPlayerDetail } from "@/lib/db/match";
 
 interface MatchPlayersTableProps {
   players: MatchPlayerDetail[];
-  team: "Red" | "Blue";
+  team: "Red" | "Blue" | "Spectator";
 }
 
-function getTeamStyles(team: "Red" | "Blue") {
+function getTeamStyles(team: "Red" | "Blue" | "Spectator") {
   if (team === "Red") {
     return {
       badge: "bg-red-500 hover:bg-red-600",
     };
   }
+  if (team === "Blue") {
+    return {
+      badge: "bg-blue-500 hover:bg-blue-600",
+    };
+  }
   return {
-    badge: "bg-blue-500 hover:bg-blue-600",
+    badge: "bg-muted text-muted-foreground",
   };
 }
 
 // Default visibility: fixed columns always shown, optional columns configurable
 const defaultColumnVisibility: VisibilityState = {
-  assists: false,
-  baseCleanKills: true,
-  captures: true,
+  assistsSum: false,
+  bcSum: true,
+  capturesSum: true,
   clientNumber: false,
-  flagGrabs: true,
-  flagHold: true,
+  flagGrabsSum: true,
+  flagHoldSum: true,
   kdr: true,
   nameClean: true,
-  ping: false,
-  returns: true,
-  score: true,
-  time: false,
+  pingMean: false,
+  returnsSum: true,
+  scoreSum: true,
+  timeSum: false,
 };
 
 // Column labels for the dropdown menu
 const columnLabels: Record<string, string> = {
-  assists: "Assists",
-  baseCleanKills: "Base Clean Kills",
-  captures: "Captures",
+  assistsSum: "Assists",
+  bcSum: "Base Clean Kills",
+  capturesSum: "Captures",
   clientNumber: "Client #",
-  flagGrabs: "Flag Grabs",
-  flagHold: "Flag Hold",
+  flagGrabsSum: "Flag Grabs",
+  flagHoldSum: "Flag Hold",
   kdr: "K/D/Ratio",
   nameClean: "Player",
-  ping: "Ping",
-  returns: "Returns",
-  score: "Score",
-  time: "Time",
+  pingMean: "Ping",
+  returnsSum: "Returns",
+  scoreSum: "Score",
+  timeSum: "Time",
 };
 
 export function MatchPlayersTable({ players, team }: MatchPlayersTableProps) {
@@ -108,6 +113,7 @@ export function MatchPlayersTable({ players, team }: MatchPlayersTableProps) {
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
+    enableMultiSort: true,
     state: {
       sorting,
       columnFilters,
@@ -119,8 +125,8 @@ export function MatchPlayersTable({ players, team }: MatchPlayersTableProps) {
     return null;
   }
 
-  const totalScore = teamPlayers.reduce((sum, player) => sum + player.score, 0);
-  const totalCaptures = teamPlayers.reduce((sum, player) => sum + player.captures, 0);
+  const totalScore = teamPlayers.reduce((sum, player) => sum + player.scoreSum, 0);
+  const totalCaptures = teamPlayers.reduce((sum, player) => sum + player.capturesSum, 0);
 
   return (
     <div className="space-y-2">
