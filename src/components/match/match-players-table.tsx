@@ -24,7 +24,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -38,7 +37,8 @@ import type { MatchPlayerDetail } from "@/lib/db/match";
 
 interface MatchPlayersTableProps {
   players: MatchPlayerDetail[];
-  team: "Red" | "Blue" | "Spectator";
+  team?: "Red" | "Blue" | "Spectator";
+  minimal?: boolean;
 }
 
 function getTeamStyles(team: "Red" | "Blue" | "Spectator") {
@@ -89,19 +89,49 @@ const columnLabels: Record<string, string> = {
   timeSum: "Time",
 };
 
-export function MatchPlayersTable({ players, team }: MatchPlayersTableProps) {
-  const styles = getTeamStyles(team);
+const PAGE_SIZE = 14;
 
+export function MatchPlayersTable({
+  players,
+  team,
+  minimal = false,
+}: MatchPlayersTableProps) {
+  const styles = team ? getTeamStyles(team) : null;
+  const showBothTeams = !team; // Show both Red/Blue when no specific team is set
+
+  // Calculate which team has more captures (for sorting winner first)
+  const winningTeam = useMemo(() => {
+    const redCaptures = players
+      .filter((player) => player.team === "Red")
+      .reduce((sum, player) => sum + player.capturesSum, 0);
+    const blueCaptures = players
+      .filter((player) => player.team === "Blue")
+      .reduce((sum, player) => sum + player.capturesSum, 0);
+    return redCaptures >= blueCaptures ? "Red" : "Blue";
+  }, [players]);
+
+  const teamPlayers = useMemo(() => {
+    if (showBothTeams) {
+      const filtered = players.filter(
+        (player) => player.team === "Red" || player.team === "Blue",
+      );
+      // Sort winning team first
+      return [...filtered].sort((a, b) => {
+        if (a.team === winningTeam && b.team !== winningTeam) return -1;
+        if (a.team !== winningTeam && b.team === winningTeam) return 1;
+        return 0;
+      });
+    }
+    return players.filter((player) => player.team === team);
+  }, [players, team, showBothTeams, winningTeam]);
+
+  // No initial sorting - data is pre-sorted by winning team
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(
-    defaultColumnVisibility,
-  );
-
-  const teamPlayers = useMemo(
-    () => players.filter((player) => player.team === team),
-    [players, team],
-  );
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({
+    ...defaultColumnVisibility,
+    team: false, // Hide team column visually
+  });
 
   const table = useReactTable({
     data: teamPlayers,
@@ -114,6 +144,11 @@ export function MatchPlayersTable({ players, team }: MatchPlayersTableProps) {
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     enableMultiSort: true,
+    initialState: {
+      pagination: {
+        pageSize: PAGE_SIZE,
+      },
+    },
     state: {
       sorting,
       columnFilters,
@@ -121,62 +156,65 @@ export function MatchPlayersTable({ players, team }: MatchPlayersTableProps) {
     },
   });
 
+  const totalRows = table.getFilteredRowModel().rows.length;
+  const showPagination = totalRows > PAGE_SIZE;
+
   if (teamPlayers.length === 0) {
     return null;
   }
 
-  const totalScore = teamPlayers.reduce((sum, player) => sum + player.scoreSum, 0);
-  const totalCaptures = teamPlayers.reduce((sum, player) => sum + player.capturesSum, 0);
-
   return (
     <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold flex items-center gap-2">
-          <Badge className={styles.badge}>{team} Team</Badge>
-          <span className="text-muted-foreground text-sm font-normal">
-            {totalCaptures} captures • {totalScore} total score
-          </span>
-        </h3>
-      </div>
       <div className="flex items-center justify-between py-2">
-        <Input
-          placeholder="Filter by player..."
-          value={
-            (table.getColumn("nameClean")?.getFilterValue() as string) ?? ""
-          }
-          onChange={(event) =>
-            table.getColumn("nameClean")?.setFilterValue(event.target.value)
-          }
-          className="max-w-sm"
-        />
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="ml-auto">
-              <Settings2 className="mr-2 h-4 w-4" />
-              Columns
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-45">
-            <DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            {table
-              .getAllColumns()
-              .filter((column) => column.getCanHide())
-              .map((column) => {
-                return (
-                  <DropdownMenuCheckboxItem
-                    key={column.id}
-                    checked={column.getIsVisible()}
-                    onCheckedChange={(value) =>
-                      column.toggleVisibility(!!value)
-                    }
-                  >
-                    {columnLabels[column.id] || column.id}
-                  </DropdownMenuCheckboxItem>
-                );
-              })}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <h3 className="text-lg font-semibold flex items-center gap-2">
+          {showBothTeams ? (
+            winningTeam === "Red" ? (
+              <>
+                <Badge className="bg-red-500 hover:bg-red-600">Red</Badge>
+                <span className="text-muted-foreground">vs</span>
+                <Badge className="bg-blue-500 hover:bg-blue-600">Blue</Badge>
+              </>
+            ) : (
+              <>
+                <Badge className="bg-blue-500 hover:bg-blue-600">Blue</Badge>
+                <span className="text-muted-foreground">vs</span>
+                <Badge className="bg-red-500 hover:bg-red-600">Red</Badge>
+              </>
+            )
+          ) : styles ? (
+            <Badge className={styles.badge}>{team}</Badge>
+          ) : null}
+        </h3>
+        {!minimal && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="ml-auto">
+                <Settings2 className="mr-2 h-4 w-4" />
+                Columns
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-45">
+              <DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {table
+                .getAllColumns()
+                .filter((column) => column.getCanHide())
+                .map((column) => {
+                  return (
+                    <DropdownMenuCheckboxItem
+                      key={column.id}
+                      checked={column.getIsVisible()}
+                      onCheckedChange={(value) =>
+                        column.toggleVisibility(!!value)
+                      }
+                    >
+                      {columnLabels[column.id] || column.id}
+                    </DropdownMenuCheckboxItem>
+                  );
+                })}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
       <div className="overflow-hidden rounded-md border">
         <Table>
@@ -198,18 +236,28 @@ export function MatchPlayersTable({ players, team }: MatchPlayersTableProps) {
           </TableHeader>
           <TableBody>
             {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
+              table.getRowModel().rows.map((row) => {
+                const rowTeam = row.original.team;
+                const rowClassName = showBothTeams
+                  ? rowTeam === "Red"
+                    ? "bg-red-500/10 hover:bg-red-500/20 dark:bg-red-500/15 dark:hover:bg-red-500/25"
+                    : rowTeam === "Blue"
+                      ? "bg-blue-500/10 hover:bg-blue-500/20 dark:bg-blue-500/15 dark:hover:bg-blue-500/25"
+                      : ""
+                  : "";
+                return (
+                  <TableRow key={row.id} className={rowClassName}>
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext(),
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                );
+              })
             ) : (
               <TableRow>
                 <TableCell
@@ -223,33 +271,35 @@ export function MatchPlayersTable({ players, team }: MatchPlayersTableProps) {
           </TableBody>
         </Table>
       </div>
-      <div className="flex items-center justify-end space-x-2 py-4">
-        <div className="text-muted-foreground flex-1 text-sm">
-          {table.getFilteredRowModel().rows.length} player(s)
+      {showPagination && (
+        <div className="flex items-center justify-end space-x-2 py-4">
+          <div className="text-muted-foreground flex-1 text-sm">
+            {totalRows} player(s)
+          </div>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="icon"
+              className="size-8"
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
+            >
+              <span className="sr-only">Go to previous page</span>
+              <ChevronLeft />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="size-8"
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+            >
+              <span className="sr-only">Go to next page</span>
+              <ChevronRight />
+            </Button>
+          </div>
         </div>
-        <div className="flex items-center space-x-2">
-          <Button
-            variant="outline"
-            size="icon"
-            className="size-8"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            <span className="sr-only">Go to previous page</span>
-            <ChevronLeft />
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            className="size-8"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            <span className="sr-only">Go to next page</span>
-            <ChevronRight />
-          </Button>
-        </div>
-      </div>
+      )}
     </div>
   );
 }

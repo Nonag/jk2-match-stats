@@ -32,9 +32,8 @@ export default function MatchDetailPage({ params }: MatchDetailPageProps) {
         <MatchDetailHeader match={match} />
         <Separator className="my-6" />
         <div className="space-y-6">
-          <MatchPlayersTable players={match.players} team="Red" />
-          <MatchPlayersTable players={match.players} team="Blue" />
-          <MatchPlayersTable players={match.players} team="Spectator" />
+          <MatchPlayersTable players={match.players} />
+          <MatchPlayersTable players={match.players} team="Spectator" minimal />
         </div>
       </div>
     </div>

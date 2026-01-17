@@ -50,6 +50,23 @@ function SortableHeader({ column, label }: SortableHeaderProps) {
 export const matchPlayersColumns: ColumnDef<MatchPlayerDetail>[] = [
   // Fixed columns - enableHiding: false
   {
+    accessorKey: "team",
+    header: ({ column }) => <SortableHeader column={column} label="Team" />,
+    enableHiding: false,
+    enableSorting: true,
+    sortingFn: (rowA, rowB) => {
+      // Custom sort: Red first, then Blue
+      const teamOrder = { Red: 0, Blue: 1, Spectator: 2 };
+      const teamA = rowA.getValue("team") as string;
+      const teamB = rowB.getValue("team") as string;
+      return (teamOrder[teamA as keyof typeof teamOrder] ?? 3) - (teamOrder[teamB as keyof typeof teamOrder] ?? 3);
+    },
+    cell: ({ row }) => {
+      const team = row.getValue("team") as string;
+      return <span className="sr-only">{team}</span>;
+    },
+  },
+  {
     accessorKey: "nameClean",
     header: ({ column }) => <SortableHeader column={column} label="Player" />,
     enableHiding: false,
