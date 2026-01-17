@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ModeToggle } from "./mode-toggle";
 
 export function Navbar() {
   return (
@@ -22,6 +23,9 @@ export function Navbar() {
               Players
             </Link>
           </nav>
+        </div>
+        <div className="flex flex-1 items-center justify-end">
+          <ModeToggle />
         </div>
       </div>
     </header>

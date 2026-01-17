@@ -2,9 +2,9 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { MatchDetail } from "@/lib/api/matches";
+import type { MatchDetail } from "@/lib/db/match";
 
-interface MatchHeaderProps {
+interface MatchDetailHeaderProps {
   match: MatchDetail;
 }
 
@@ -38,7 +38,7 @@ function formatDuration(minutes: number) {
   return `${hours}h ${mins}m`;
 }
 
-export function MatchHeader({ match }: MatchHeaderProps) {
+export function MatchDetailHeader({ match }: MatchDetailHeaderProps) {
   const redWins = match.redScore > match.blueScore;
   const blueWins = match.blueScore > match.redScore;
   const isDraw = match.redScore === match.blueScore;

@@ -1,7 +1,7 @@
 "use client";
 
 import { PageHeader } from "@/components/layout";
-import { CSVImportDialog, MatchesTable } from "@/components/matches";
+import { MatchCSVImportDialog, MatchTable } from "@/components/match";
 import { useMatches } from "@/hooks/use-matches";
 
 export default function HomePage() {
@@ -13,9 +13,9 @@ export default function HomePage() {
         title="Matches"
         description="View and manage JK2 CTF match statistics"
       >
-        <CSVImportDialog onImportSuccess={refetch} />
+        <MatchCSVImportDialog onImportSuccess={refetch} />
       </PageHeader>
-      <MatchesTable matches={matches} loading={loading} />
+      <MatchTable matches={matches} loading={loading} />
     </div>
   );
 }

@@ -2,15 +2,15 @@
 
 import { useRouter } from "next/navigation";
 import { DataTable } from "@/components/ui/data-table";
-import { matchesColumns } from "./matches-columns";
-import type { MatchSummary } from "@/lib/api/matches";
+import { matchColumns } from "./match-columns";
+import type { MatchSummary } from "@/lib/db/match";
 
-interface MatchesTableProps {
+interface MatchTableProps {
   matches: MatchSummary[];
   loading?: boolean;
 }
 
-export function MatchesTable({ matches, loading }: MatchesTableProps) {
+export function MatchTable({ matches, loading }: MatchTableProps) {
   const router = useRouter();
 
   if (loading) {
@@ -33,7 +33,7 @@ export function MatchesTable({ matches, loading }: MatchesTableProps) {
 
   return (
     <DataTable
-      columns={matchesColumns}
+      columns={matchColumns}
       data={matches}
       searchKey="mapName"
       searchPlaceholder="Filter by map..."

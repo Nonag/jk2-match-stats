@@ -1,6 +1,31 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# JK2 Match Stats
+
+A [Next.js](https://nextjs.org) web application for tracking Jedi Knight 2 match statistics.
 
 ## Getting Started
+
+### Database Setup
+
+This project uses Prisma with SQLite for local development (migration-free workflow).
+
+```bash
+# Generate Prisma client
+npm run db:generate
+
+# Push schema to database (creates tables)
+npm run db:push
+
+# Seed database with sample data
+npm run db:seed
+
+# Reset database (delete, recreate, and seed)
+npm run db:reset
+
+# Open Prisma Studio to view/edit data
+npm run db:studio
+```
+
+### Development Server
 
 First, run the development server:
 

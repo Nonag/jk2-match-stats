@@ -1,5 +1,5 @@
-import prisma from "@/lib/prisma";
-import { ParsedMatchData, calculateMatchStats } from "@/lib/csv-parser";
+import prisma from "./client";
+import { ParsedMatchData, calculateMatchStats } from "@/lib/utils";
 
 export interface MatchSummary {
   id: string;
@@ -58,7 +58,7 @@ export async function getAllMatches(): Promise<MatchSummary[]> {
       duration: true,
     },
   });
-  
+
   return matches;
 }
 
@@ -81,9 +81,9 @@ export async function getMatchById(id: string): Promise<MatchDetail | null> {
       },
     },
   });
-  
+
   if (!match) return null;
-  
+
   return {
     id: match.id,
     date: match.date,
@@ -127,7 +127,7 @@ export async function checkMatchExists(fileName: string): Promise<boolean> {
 
 export async function importMatch(data: ParsedMatchData): Promise<{ id: string }> {
   const { redScore, blueScore, duration } = calculateMatchStats(data.players);
-  
+
   const match = await prisma.match.create({
     data: {
       date: data.date,
@@ -160,7 +160,7 @@ export async function importMatch(data: ParsedMatchData): Promise<{ id: string }
     },
     select: { id: true },
   });
-  
+
   return match;
 }
 

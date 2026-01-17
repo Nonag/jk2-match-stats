@@ -1,4 +1,4 @@
-import prisma from "@/lib/prisma";
+import prisma from "./client";
 
 export interface PlayerWithAliases {
   id: string;
@@ -29,7 +29,7 @@ export async function getAllPlayers(): Promise<PlayerWithAliases[]> {
     },
     orderBy: { primaryName: "asc" },
   });
-  
+
   return players.map((p) => ({
     id: p.id,
     primaryName: p.primaryName,
@@ -56,9 +56,9 @@ export async function getPlayerById(id: string): Promise<PlayerWithAliases | nul
       },
     },
   });
-  
+
   if (!player) return null;
-  
+
   return {
     id: player.id,
     primaryName: player.primaryName,
@@ -114,17 +114,17 @@ export async function linkMatchPlayerToPlayer(
     where: { id: matchPlayerId },
     select: { nameClean: true, nameRaw: true },
   });
-  
+
   if (!matchPlayer) {
     throw new Error("Match player not found");
   }
-  
+
   // Update the match player to link to the player
   await prisma.matchPlayer.update({
     where: { id: matchPlayerId },
     data: { playerId },
   });
-  
+
   // Add the alias to the player
   await linkAliasToPlayer(playerId, matchPlayer.nameClean, matchPlayer.nameRaw);
 }
@@ -153,6 +153,6 @@ export async function getUnlinkedMatchPlayers(): Promise<
     },
     distinct: ["nameClean"],
   });
-  
+
   return unlinked;
 }

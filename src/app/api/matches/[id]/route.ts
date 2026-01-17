@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getMatchById, deleteMatch } from "@/lib/api/matches";
+import { getMatchById, deleteMatch } from "@/lib/db/match";
 
 export async function GET(
   request: NextRequest,
@@ -8,14 +8,14 @@ export async function GET(
   try {
     const { id } = await params;
     const match = await getMatchById(id);
-    
+
     if (!match) {
       return NextResponse.json(
         { error: "Match not found" },
         { status: 404 }
       );
     }
-    
+
     return NextResponse.json(match);
   } catch (error) {
     console.error("Error fetching match:", error);

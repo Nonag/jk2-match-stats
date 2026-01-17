@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getAllPlayers, createPlayer } from "@/lib/api/players";
+import { getAllPlayers, createPlayer } from "@/lib/db/player";
 
 export async function GET() {
   try {
@@ -17,14 +17,14 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const { primaryName } = await request.json();
-    
+
     if (!primaryName || typeof primaryName !== "string") {
       return NextResponse.json(
         { error: "Primary name is required" },
         { status: 400 }
       );
     }
-    
+
     const player = await createPlayer(primaryName);
     return NextResponse.json(player);
   } catch (error) {

@@ -4,7 +4,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowUpDown } from "lucide-react";
-import type { MatchSummary } from "@/lib/api/matches";
+import type { MatchSummary } from "@/lib/db/match";
 
 function formatDate(date: Date | string) {
   const d = new Date(date);
@@ -35,7 +35,7 @@ function formatMapName(mapName: string) {
     .join(" ");
 }
 
-export const matchesColumns: ColumnDef<MatchSummary>[] = [
+export const matchColumns: ColumnDef<MatchSummary>[] = [
   {
     accessorKey: "date",
     header: ({ column }) => (

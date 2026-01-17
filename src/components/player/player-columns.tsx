@@ -4,9 +4,9 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowUpDown } from "lucide-react";
-import type { PlayerWithAliases } from "@/lib/api/players";
+import type { PlayerWithAliases } from "@/lib/db/player";
 
-export const playersColumns: ColumnDef<PlayerWithAliases>[] = [
+export const playerColumns: ColumnDef<PlayerWithAliases>[] = [
   {
     accessorKey: "primaryName",
     header: ({ column }) => (

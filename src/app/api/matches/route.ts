@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAllMatches, importMatch, checkMatchExists } from "@/lib/api/matches";
-import { parseCSV } from "@/lib/csv-parser";
+import { getAllMatches, importMatch, checkMatchExists } from "@/lib/db/match";
+import { parseCSV } from "@/lib/utils";
 
 export async function GET() {
   try {
@@ -19,16 +19,16 @@ export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
-    
+
     if (!file) {
       return NextResponse.json(
         { error: "No file provided" },
         { status: 400 }
       );
     }
-    
+
     const fileName = file.name;
-    
+
     // Check if match already exists
     const exists = await checkMatchExists(fileName);
     if (exists) {
@@ -37,16 +37,16 @@ export async function POST(request: NextRequest) {
         { status: 409 }
       );
     }
-    
+
     const csvContent = await file.text();
     const parsedData = parseCSV(csvContent, fileName);
-    
+
     const match = await importMatch(parsedData);
-    
-    return NextResponse.json({ 
-      success: true, 
+
+    return NextResponse.json({
+      success: true,
       matchId: match.id,
-      message: "Match imported successfully" 
+      message: "Match imported successfully"
     });
   } catch (error) {
     console.error("Error importing match:", error);

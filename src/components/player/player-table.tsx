@@ -1,15 +1,15 @@
 "use client";
 
 import { DataTable } from "@/components/ui/data-table";
-import { playersColumns } from "./players-columns";
-import type { PlayerWithAliases } from "@/lib/api/players";
+import { playerColumns } from "./player-columns";
+import type { PlayerWithAliases } from "@/lib/db/player";
 
-interface PlayersTableProps {
+interface PlayerTableProps {
   players: PlayerWithAliases[];
   loading?: boolean;
 }
 
-export function PlayersTable({ players, loading }: PlayersTableProps) {
+export function PlayerTable({ players, loading }: PlayerTableProps) {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-8">
@@ -30,7 +30,7 @@ export function PlayersTable({ players, loading }: PlayersTableProps) {
 
   return (
     <DataTable
-      columns={playersColumns}
+      columns={playerColumns}
       data={players}
       searchKey="primaryName"
       searchPlaceholder="Filter by name..."

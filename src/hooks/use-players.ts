@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import type { PlayerWithAliases } from "@/lib/api/players";
+import type { PlayerWithAliases } from "@/lib/db/player";
 
 export function usePlayers() {
   const [players, setPlayers] = useState<PlayerWithAliases[]>([]);
@@ -39,20 +39,20 @@ export function useCreatePlayer() {
   const createPlayer = useCallback(async (primaryName: string): Promise<{ id: string } | null> => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const response = await fetch("/api/players", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ primaryName }),
       });
-      
+
       const data = await response.json();
-      
+
       if (!response.ok) {
         throw new Error(data.error || "Failed to create player");
       }
-      
+
       return data;
     } catch (err) {
       const error = err instanceof Error ? err : new Error("Unknown error");
@@ -73,19 +73,19 @@ export function useLinkPlayer() {
   const linkPlayer = useCallback(async (matchPlayerId: string, playerId: string): Promise<boolean> => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const response = await fetch("/api/players/link", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ matchPlayerId, playerId }),
       });
-      
+
       if (!response.ok) {
         const data = await response.json();
         throw new Error(data.error || "Failed to link player");
       }
-      
+
       return true;
     } catch (err) {
       const error = err instanceof Error ? err : new Error("Unknown error");
@@ -99,19 +99,19 @@ export function useLinkPlayer() {
   const unlinkPlayer = useCallback(async (matchPlayerId: string): Promise<boolean> => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const response = await fetch("/api/players/link", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ matchPlayerId }),
       });
-      
+
       if (!response.ok) {
         const data = await response.json();
         throw new Error(data.error || "Failed to unlink player");
       }
-      
+
       return true;
     } catch (err) {
       const error = err instanceof Error ? err : new Error("Unknown error");

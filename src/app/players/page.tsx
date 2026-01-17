@@ -1,7 +1,7 @@
 "use client";
 
 import { PageHeader } from "@/components/layout";
-import { PlayersTable } from "@/components/players";
+import { PlayerTable } from "@/components/player";
 import { usePlayers } from "@/hooks/use-players";
 
 export default function PlayersPage() {
@@ -13,7 +13,7 @@ export default function PlayersPage() {
         title="Players"
         description="Manage player identities and aliases"
       />
-      <PlayersTable players={players} loading={loading} />
+      <PlayerTable players={players} loading={loading} />
     </div>
   );
 }

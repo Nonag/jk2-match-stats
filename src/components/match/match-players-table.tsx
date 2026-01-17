@@ -3,7 +3,7 @@
 import { Badge } from "@/components/ui/badge";
 import { DataTable } from "@/components/ui/data-table";
 import { matchPlayersColumns } from "./match-players-columns";
-import type { MatchPlayerDetail } from "@/lib/api/matches";
+import type { MatchPlayerDetail } from "@/lib/db/match";
 
 interface MatchPlayersTableProps {
   players: MatchPlayerDetail[];

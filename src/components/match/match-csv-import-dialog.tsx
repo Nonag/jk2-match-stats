@@ -15,11 +15,11 @@ import {
 import { useImportMatch } from "@/hooks/use-matches";
 import { toast } from "sonner";
 
-interface CSVImportDialogProps {
+interface MatchCSVImportDialogProps {
   onImportSuccess?: () => void;
 }
 
-export function CSVImportDialog({ onImportSuccess }: CSVImportDialogProps) {
+export function MatchCSVImportDialog({ onImportSuccess }: MatchCSVImportDialogProps) {
   const [open, setOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const { importMatch, loading } = useImportMatch();
@@ -45,7 +45,7 @@ export function CSVImportDialog({ onImportSuccess }: CSVImportDialogProps) {
     if (!selectedFile) return;
 
     const result = await importMatch(selectedFile);
-    
+
     if (result.success) {
       toast.success("Match imported successfully!");
       setSelectedFile(null);

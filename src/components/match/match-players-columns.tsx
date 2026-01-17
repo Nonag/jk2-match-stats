@@ -3,7 +3,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { ArrowUpDown } from "lucide-react";
-import type { MatchPlayerDetail } from "@/lib/api/matches";
+import type { MatchPlayerDetail } from "@/lib/db/match";
 
 export const matchPlayersColumns: ColumnDef<MatchPlayerDetail>[] = [
   {

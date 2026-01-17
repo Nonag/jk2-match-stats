@@ -3,7 +3,7 @@
 import { use } from "react";
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/layout";
-import { MatchHeader, MatchPlayersTable } from "@/components/matches";
+import { MatchDetailHeader, MatchPlayersTable } from "@/components/match";
 import { useMatch } from "@/hooks/use-matches";
 import { Separator } from "@/components/ui/separator";
 
@@ -30,7 +30,7 @@ export default function MatchDetailPage({ params }: MatchDetailPageProps) {
   return (
     <div className="space-y-6">
       <PageHeader title="Match Details" backHref="/" />
-      <MatchHeader match={match} />
+      <MatchDetailHeader match={match} />
       <Separator />
       <div className="space-y-6">
         <MatchPlayersTable players={match.players} team="Red" />

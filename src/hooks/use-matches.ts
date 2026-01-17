@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import type { MatchSummary, MatchDetail } from "@/lib/api/matches";
+import type { MatchSummary, MatchDetail } from "@/lib/db/match";
 
 export function useMatches() {
   const [matches, setMatches] = useState<MatchSummary[]>([]);
@@ -39,7 +39,7 @@ export function useMatch(id: string) {
 
   const fetchMatch = useCallback(async () => {
     if (!id) return;
-    
+
     setLoading(true);
     setError(null);
     try {
@@ -70,22 +70,22 @@ export function useImportMatch() {
   const importMatch = useCallback(async (file: File): Promise<{ success: boolean; matchId?: string }> => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const formData = new FormData();
       formData.append("file", file);
-      
+
       const response = await fetch("/api/matches", {
         method: "POST",
         body: formData,
       });
-      
+
       const data = await response.json();
-      
+
       if (!response.ok) {
         throw new Error(data.error || "Failed to import match");
       }
-      
+
       return { success: true, matchId: data.matchId };
     } catch (err) {
       const error = err instanceof Error ? err : new Error("Unknown error");
@@ -106,17 +106,17 @@ export function useDeleteMatch() {
   const deleteMatch = useCallback(async (id: string): Promise<boolean> => {
     setLoading(true);
     setError(null);
-    
+
     try {
       const response = await fetch(`/api/matches/${id}`, {
         method: "DELETE",
       });
-      
+
       if (!response.ok) {
         const data = await response.json();
         throw new Error(data.error || "Failed to delete match");
       }
-      
+
       return true;
     } catch (err) {
       const error = err instanceof Error ? err : new Error("Unknown error");
