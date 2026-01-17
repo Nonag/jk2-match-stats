@@ -38,28 +38,32 @@ function formatMapName(mapName: string) {
 export const matchColumns: ColumnDef<MatchSummary>[] = [
   {
     accessorKey: "date",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Date
-        <ArrowUpDown className="ml-2 h-4 w-4" />
-      </Button>
-    ),
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Date
+          <ArrowUpDown />
+        </Button>
+      );
+    },
     cell: ({ row }) => formatDate(row.getValue("date")),
   },
   {
     accessorKey: "mapName",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Map
-        <ArrowUpDown className="ml-2 h-4 w-4" />
-      </Button>
-    ),
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Map
+          <ArrowUpDown />
+        </Button>
+      );
+    },
     cell: ({ row }) => formatMapName(row.getValue("mapName")),
     filterFn: (row, id, value) => {
       const mapName = formatMapName(row.getValue(id) as string).toLowerCase();
@@ -101,15 +105,17 @@ export const matchColumns: ColumnDef<MatchSummary>[] = [
   },
   {
     accessorKey: "duration",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Duration
-        <ArrowUpDown className="ml-2 h-4 w-4" />
-      </Button>
-    ),
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Duration
+          <ArrowUpDown />
+        </Button>
+      );
+    },
     cell: ({ row }) => formatDuration(row.getValue("duration")),
   },
 ];

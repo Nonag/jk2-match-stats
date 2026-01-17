@@ -66,9 +66,8 @@ export function MatchDetailHeader({ match }: MatchDetailHeaderProps) {
             >
               {match.redScore}
             </Badge>
-            <p className={`mt-2 font-semibold ${redWins ? "text-red-500" : "text-muted-foreground"}`}>
+            <p className={`mt-2 font-medium ${redWins ? "text-red-500" : "text-muted-foreground"}`}>
               Red Team
-              {redWins && " 🏆"}
             </p>
           </div>
           <div className="text-4xl font-bold text-muted-foreground">
@@ -84,9 +83,8 @@ export function MatchDetailHeader({ match }: MatchDetailHeaderProps) {
             >
               {match.blueScore}
             </Badge>
-            <p className={`mt-2 font-semibold ${blueWins ? "text-blue-500" : "text-muted-foreground"}`}>
+            <p className={`mt-2 font-medium ${blueWins ? "text-blue-500" : "text-muted-foreground"}`}>
               Blue Team
-              {blueWins && " 🏆"}
             </p>
           </div>
         </div>

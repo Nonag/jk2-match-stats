@@ -9,15 +9,17 @@ import type { PlayerWithAliases } from "@/lib/db/player";
 export const playerColumns: ColumnDef<PlayerWithAliases>[] = [
   {
     accessorKey: "primaryName",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Primary Name
-        <ArrowUpDown className="ml-2 h-4 w-4" />
-      </Button>
-    ),
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Primary Name
+          <ArrowUpDown />
+        </Button>
+      );
+    },
     cell: ({ row }) => (
       <span className="font-medium">{row.getValue("primaryName")}</span>
     ),
@@ -44,15 +46,17 @@ export const playerColumns: ColumnDef<PlayerWithAliases>[] = [
   },
   {
     accessorKey: "matchCount",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Matches
-        <ArrowUpDown className="ml-2 h-4 w-4" />
-      </Button>
-    ),
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Matches
+          <ArrowUpDown />
+        </Button>
+      );
+    },
     cell: ({ row }) => (
       <div className="text-right">{row.getValue("matchCount")}</div>
     ),

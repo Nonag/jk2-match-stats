@@ -10,7 +10,9 @@ export const matchPlayersColumns: ColumnDef<MatchPlayerDetail>[] = [
     accessorKey: "clientNumber",
     header: "#",
     cell: ({ row }) => (
-      <span className="text-muted-foreground">{row.getValue("clientNumber")}</span>
+      <span className="text-muted-foreground">
+        {row.getValue("clientNumber")}
+      </span>
     ),
   },
   {
@@ -33,89 +35,89 @@ export const matchPlayersColumns: ColumnDef<MatchPlayerDetail>[] = [
   },
   {
     accessorKey: "score",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        size="sm"
-        className="-ml-3 h-8"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Score
-        <ArrowUpDown className="ml-2 h-4 w-4" />
-      </Button>
-    ),
-    cell: ({ row }) => <div className="text-right">{row.getValue("score")}</div>,
+    header: ({ column }) => {
+      return (
+        <Button
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          variant="ghost"
+        >
+          Score
+          <ArrowUpDown />
+        </Button>
+      );
+    },
+    cell: ({ row }) => <div>{row.getValue("score")}</div>,
   },
   {
     accessorKey: "captures",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        size="sm"
-        className="-ml-3 h-8"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Caps
-        <ArrowUpDown className="ml-2 h-4 w-4" />
-      </Button>
-    ),
+    header: ({ column }) => {
+      return (
+        <Button
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          variant="ghost"
+        >
+          Caps
+          <ArrowUpDown />
+        </Button>
+      );
+    },
     cell: ({ row }) => (
-      <div className="text-right font-semibold">{row.getValue("captures")}</div>
+      <div>{row.getValue("captures")}</div>
     ),
   },
   {
     accessorKey: "returns",
     header: "Ret",
-    cell: ({ row }) => <div className="text-right">{row.getValue("returns")}</div>,
+    cell: ({ row }) => <div>{row.getValue("returns")}</div>,
   },
   {
     accessorKey: "baseCaptures",
     header: "BC",
-    cell: ({ row }) => <div className="text-right">{row.getValue("baseCaptures")}</div>,
+    cell: ({ row }) => <div>{row.getValue("baseCaptures")}</div>,
   },
   {
     accessorKey: "assists",
     header: "Ast",
-    cell: ({ row }) => <div className="text-right">{row.getValue("assists")}</div>,
+    cell: ({ row }) => <div>{row.getValue("assists")}</div>,
   },
   {
     accessorKey: "kills",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        size="sm"
-        className="-ml-3 h-8"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        K
-        <ArrowUpDown className="ml-2 h-4 w-4" />
-      </Button>
-    ),
-    cell: ({ row }) => <div className="text-right">{row.getValue("kills")}</div>,
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          K
+          <ArrowUpDown />
+        </Button>
+      );
+    },
+    cell: ({ row }) => <div>{row.getValue("kills")}</div>,
   },
   {
     accessorKey: "deaths",
     header: "D",
-    cell: ({ row }) => <div className="text-right">{row.getValue("deaths")}</div>,
+    cell: ({ row }) => <div>{row.getValue("deaths")}</div>,
   },
   {
     id: "kd",
     header: "K/D",
     cell: ({ row }) => {
-      const kills = row.original.kills;
       const deaths = row.original.deaths;
+      const kills = row.original.kills;
       const kd = deaths > 0 ? (kills / deaths).toFixed(2) : kills.toFixed(2);
-      return <div className="text-right">{kd}</div>;
+      return <div>{kd}</div>;
     },
   },
   {
     accessorKey: "time",
     header: "Time",
-    cell: ({ row }) => <div className="text-right">{row.getValue("time")}m</div>,
+    cell: ({ row }) => <div>{row.getValue("time")}m</div>,
   },
   {
     accessorKey: "ping",
     header: "Ping",
-    cell: ({ row }) => <div className="text-right">{row.getValue("ping")}</div>,
+    cell: ({ row }) => <div>{row.getValue("ping")}</div>,
   },
 ];

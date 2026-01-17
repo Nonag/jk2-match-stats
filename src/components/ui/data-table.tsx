@@ -12,6 +12,10 @@ import {
   getFilteredRowModel,
 } from "@tanstack/react-table";
 import {
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
+import {
   Table,
   TableBody,
   TableCell,
@@ -57,9 +61,9 @@ export function DataTable<TData, TValue>({
   });
 
   return (
-    <div className="space-y-4">
+    <div className="w-full">
       {searchKey && (
-        <div className="flex items-center">
+        <div className="flex items-center py-4">
           <Input
             placeholder={searchPlaceholder}
             value={(table.getColumn(searchKey)?.getFilterValue() as string) ?? ""}
@@ -70,7 +74,7 @@ export function DataTable<TData, TValue>({
           />
         </div>
       )}
-      <div className="rounded-md border">
+      <div className="overflow-hidden rounded-md border">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -120,26 +124,30 @@ export function DataTable<TData, TValue>({
           </TableBody>
         </Table>
       </div>
-      <div className="flex items-center justify-between">
-        <div className="text-sm text-muted-foreground">
+      <div className="flex items-center justify-end space-x-2 py-4">
+        <div className="text-muted-foreground flex-1 text-sm">
           {table.getFilteredRowModel().rows.length} row(s)
         </div>
         <div className="flex items-center space-x-2">
           <Button
             variant="outline"
-            size="sm"
+            size="icon"
+            className="size-8"
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
           >
-            Previous
+            <span className="sr-only">Go to previous page</span>
+            <ChevronLeft />
           </Button>
           <Button
             variant="outline"
-            size="sm"
+            size="icon"
+            className="size-8"
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
           >
-            Next
+            <span className="sr-only">Go to next page</span>
+            <ChevronRight />
           </Button>
         </div>
       </div>

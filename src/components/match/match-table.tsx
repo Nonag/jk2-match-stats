@@ -35,9 +35,9 @@ export function MatchTable({ matches, loading }: MatchTableProps) {
     <DataTable
       columns={matchColumns}
       data={matches}
+      onRowClick={(match) => router.push(`/matches/${match.id}`)}
       searchKey="mapName"
       searchPlaceholder="Filter by map..."
-      onRowClick={(match) => router.push(`/matches/${match.id}`)}
     />
   );
 }
