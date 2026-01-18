@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import {
   ColumnFiltersState,
   SortingState,
-  VisibilityState,
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
@@ -34,11 +33,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useTableSettings } from "@/providers";
 import { matchPlayersColumns } from "./match-players-columns";
 import {
   columnGroups,
   columnLabels,
-  defaultColumnVisibility,
   type ColumnId,
 } from "./match-players-config";
 import type { MatchPlayerDetail } from "@/lib/db/match";
@@ -104,9 +103,8 @@ export function MatchPlayersTable({
   // No initial sorting - data is pre-sorted by winning team
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(
-    defaultColumnVisibility,
-  );
+  const { settings, setMatchPlayersColumns } = useTableSettings();
+  const columnVisibility = settings.matchPlayersColumns;
 
   const table = useReactTable({
     data: teamPlayers,
@@ -117,7 +115,7 @@ export function MatchPlayersTable({
     getSortedRowModel: getSortedRowModel(),
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
-    onColumnVisibilityChange: setColumnVisibility,
+    onColumnVisibilityChange: setMatchPlayersColumns,
     enableMultiSort: true,
     initialState: {
       pagination: {
