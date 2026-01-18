@@ -16,6 +16,7 @@ import { ChevronLeft, ChevronRight, Settings2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import {
@@ -179,12 +180,17 @@ export function MatchPlayersTable({
 
                   if (groupColumns.length === 0) return null;
 
-                  const visibleCount = groupColumns.filter((col) => col?.getIsVisible()).length;
+                  const visibleCount = groupColumns.filter((col) =>
+                    col?.getIsVisible(),
+                  ).length;
                   const allVisible = visibleCount === groupColumns.length;
-                  const someVisible = visibleCount > 0 && visibleCount < groupColumns.length;
+                  const someVisible =
+                    visibleCount > 0 && visibleCount < groupColumns.length;
 
                   const toggleGroup = (checked: boolean) => {
-                    groupColumns.forEach((col) => col?.toggleVisibility(checked));
+                    groupColumns.forEach((col) =>
+                      col?.toggleVisibility(checked),
+                    );
                   };
 
                   return (
@@ -237,21 +243,30 @@ export function MatchPlayersTable({
           </Sheet>
         )}
       </div>
-      <div className="overflow-hidden rounded-md border">
+      <div className="rounded-md border">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id}>
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )}
-                  </TableHead>
-                ))}
+              <TableRow key={headerGroup.id} className="group">
+                {headerGroup.headers.map((header) => {
+                  const isSticky = header.column.id === "nameClean";
+                  return (
+                    <TableHead
+                      key={header.id}
+                      className={cn(
+                        "bg-background group-hover:bg-muted border-b border-zinc-200 dark:border-zinc-800",
+                        isSticky && "sticky left-0",
+                      )}
+                    >
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext(),
+                          )}
+                    </TableHead>
+                  );
+                })}
               </TableRow>
             ))}
           </TableHeader>
@@ -259,23 +274,32 @@ export function MatchPlayersTable({
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => {
                 const rowTeam = row.original.team;
-                const rowClassName = showBothTeams
-                  ? rowTeam === "Red"
-                    ? "bg-red-500/10 hover:bg-red-500/20 dark:bg-red-500/15 dark:hover:bg-red-500/25"
-                    : rowTeam === "Blue"
-                      ? "bg-blue-500/10 hover:bg-blue-500/20 dark:bg-blue-500/15 dark:hover:bg-blue-500/25"
-                      : ""
-                  : "";
+                const cellBg =
+                  showBothTeams && rowTeam === "Red"
+                    ? "bg-red-50 group-hover:bg-red-100 border-red-100 dark:bg-red-950 dark:group-hover:bg-red-900 dark:border-red-900"
+                    : showBothTeams && rowTeam === "Blue"
+                      ? "bg-blue-50 group-hover:bg-blue-100 border-blue-100 dark:bg-blue-950 dark:group-hover:bg-blue-900 dark:border-blue-900"
+                      : undefined;
                 return (
-                  <TableRow key={row.id} className={rowClassName}>
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext(),
-                        )}
-                      </TableCell>
-                    ))}
+                  <TableRow key={row.id} className="group">
+                    {row.getVisibleCells().map((cell) => {
+                      const isSticky = cell.column.id === "nameClean";
+                      return (
+                        <TableCell
+                          key={cell.id}
+                          className={cn(
+                            cellBg,
+                            isSticky && "sticky left-0",
+                            "border-b",
+                          )}
+                        >
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext(),
+                          )}
+                        </TableCell>
+                      );
+                    })}
                   </TableRow>
                 );
               })
