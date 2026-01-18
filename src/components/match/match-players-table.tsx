@@ -33,6 +33,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { matchPlayersColumns } from "./match-players-columns";
+import { columnGroups, columnLabels, defaultColumnVisibility, type ColumnId } from "./match-players-config";
 import type { MatchPlayerDetail } from "@/lib/db/match";
 
 interface MatchPlayersTableProps {
@@ -56,38 +57,6 @@ function getTeamStyles(team: "Red" | "Blue" | "Spectator") {
     badge: "bg-muted text-muted-foreground",
   };
 }
-
-// Default visibility: fixed columns always shown, optional columns configurable
-const defaultColumnVisibility: VisibilityState = {
-  assistsSum: false,
-  bcSum: true,
-  capturesSum: true,
-  clientNumber: false,
-  flagGrabsSum: true,
-  flagHoldSum: true,
-  kdr: true,
-  nameClean: true,
-  pingMean: false,
-  returnsSum: true,
-  scoreSum: true,
-  timeSum: false,
-};
-
-// Column labels for the dropdown menu
-const columnLabels: Record<string, string> = {
-  assistsSum: "Assists",
-  bcSum: "Base Clean Kills",
-  capturesSum: "Captures",
-  clientNumber: "Client #",
-  flagGrabsSum: "Flag Grabs",
-  flagHoldSum: "Flag Hold",
-  kdr: "K/D/Ratio",
-  nameClean: "Player",
-  pingMean: "Ping",
-  returnsSum: "Returns",
-  scoreSum: "Score",
-  timeSum: "Time",
-};
 
 const PAGE_SIZE = 14;
 
@@ -128,10 +97,7 @@ export function MatchPlayersTable({
   // No initial sorting - data is pre-sorted by winning team
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({
-    ...defaultColumnVisibility,
-    team: false, // Hide team column visually
-  });
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(defaultColumnVisibility);
 
   const table = useReactTable({
     data: teamPlayers,
@@ -193,25 +159,38 @@ export function MatchPlayersTable({
                 Columns
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-45">
+            <DropdownMenuContent align="end" className="w-48 max-h-96 overflow-y-auto">
               <DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {table
-                .getAllColumns()
-                .filter((column) => column.getCanHide())
-                .map((column) => {
-                  return (
-                    <DropdownMenuCheckboxItem
-                      key={column.id}
-                      checked={column.getIsVisible()}
-                      onCheckedChange={(value) =>
-                        column.toggleVisibility(!!value)
-                      }
-                    >
-                      {columnLabels[column.id] || column.id}
-                    </DropdownMenuCheckboxItem>
-                  );
-                })}
+              {columnGroups.map((group) => {
+                const groupColumns = group.columns
+                  .map((colId) => table.getColumn(colId))
+                  .filter((col) => col && col.getCanHide());
+
+                if (groupColumns.length === 0) return null;
+
+                return (
+                  <div key={group.label}>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuLabel className="text-xs text-muted-foreground font-normal">
+                      {group.label}
+                    </DropdownMenuLabel>
+                    {groupColumns.map((column) => {
+                      if (!column) return null;
+                      return (
+                        <DropdownMenuCheckboxItem
+                          key={column.id}
+                          checked={column.getIsVisible()}
+                          onCheckedChange={(value) =>
+                            column.toggleVisibility(!!value)
+                          }
+                        >
+                          {columnLabels[column.id as ColumnId] || column.id}
+                        </DropdownMenuCheckboxItem>
+                      );
+                    })}
+                  </div>
+                );
+              })}
             </DropdownMenuContent>
           </DropdownMenu>
         )}

@@ -4,6 +4,7 @@ import { Column, ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
 import type { MatchPlayerDetail } from "@/lib/db/match";
+import { columnConfig, ColumnId } from "./match-players-config";
 
 interface SortableHeaderProps {
   column: Column<MatchPlayerDetail, unknown>;
@@ -15,13 +16,10 @@ function SortableHeader({ column, label }: SortableHeaderProps) {
 
   const handleClick = (e: React.MouseEvent) => {
     if (sorted === "asc") {
-      // Third click: remove from sort
       column.clearSorting();
     } else if (sorted === "desc") {
-      // Second click: change to asc
       column.toggleSorting(false, e.shiftKey);
     } else {
-      // First click: sort desc
       column.toggleSorting(true, e.shiftKey);
     }
   };
@@ -47,108 +45,76 @@ function SortableHeader({ column, label }: SortableHeaderProps) {
   );
 }
 
-export const matchPlayersColumns: ColumnDef<MatchPlayerDetail>[] = [
-  // Fixed columns - enableHiding: false
-  {
-    accessorKey: "team",
-    header: ({ column }) => <SortableHeader column={column} label="Team" />,
-    enableHiding: false,
+// Default numeric cell renderer - shows value with muted style when 0
+function NumericCell({ value }: { value: number }) {
+  return <div className={value === 0 ? "text-muted-foreground" : ""}>{value}</div>;
+}
+
+// Generate a standard column definition for numeric fields
+function createNumericColumn(id: ColumnId): ColumnDef<MatchPlayerDetail> {
+  return {
+    accessorKey: id,
+    header: ({ column }) => <SortableHeader column={column} label={columnConfig[id].label} />,
+    enableHiding: columnConfig[id].canHide,
+    cell: ({ row }) => <NumericCell value={row.getValue(id) as number} />,
+  };
+}
+
+// Custom column definitions for columns that need special handling
+const customColumns: Partial<Record<ColumnId, ColumnDef<MatchPlayerDetail>>> = {
+  [ColumnId.team]: {
+    accessorKey: ColumnId.team,
+    header: ({ column }) => <SortableHeader column={column} label={columnConfig[ColumnId.team].label} />,
+    enableHiding: columnConfig[ColumnId.team].canHide,
     enableSorting: true,
     sortingFn: (rowA, rowB) => {
-      // Custom sort: Red first, then Blue
       const teamOrder = { Red: 0, Blue: 1, Spectator: 2 };
-      const teamA = rowA.getValue("team") as string;
-      const teamB = rowB.getValue("team") as string;
+      const teamA = rowA.getValue(ColumnId.team) as string;
+      const teamB = rowB.getValue(ColumnId.team) as string;
       return (teamOrder[teamA as keyof typeof teamOrder] ?? 3) - (teamOrder[teamB as keyof typeof teamOrder] ?? 3);
     },
     cell: ({ row }) => {
-      const team = row.getValue("team") as string;
+      const team = row.getValue(ColumnId.team) as string;
       return <span className="sr-only">{team}</span>;
     },
   },
-  {
-    accessorKey: "nameClean",
-    header: ({ column }) => <SortableHeader column={column} label="Player" />,
-    enableHiding: false,
+
+  [ColumnId.nameClean]: {
+    accessorKey: ColumnId.nameClean,
+    header: ({ column }) => <SortableHeader column={column} label={columnConfig[ColumnId.nameClean].label} />,
+    enableHiding: columnConfig[ColumnId.nameClean].canHide,
     cell: ({ row }) => {
-      const nameClean = row.getValue("nameClean") as string;
+      const nameClean = row.getValue(ColumnId.nameClean) as string;
       const playerPrimaryName = row.original.playerPrimaryName;
       return (
         <div className="flex flex-col">
           <span className="font-medium">{nameClean}</span>
           {playerPrimaryName && playerPrimaryName !== nameClean && (
-            <span className="text-xs text-muted-foreground">
-              aka {playerPrimaryName}
-            </span>
+            <span className="text-xs text-muted-foreground">aka {playerPrimaryName}</span>
           )}
         </div>
       );
     },
   },
-  {
-    accessorKey: "scoreSum",
-    header: ({ column }) => <SortableHeader column={column} label="Score" />,
-    enableHiding: false,
-    cell: ({ row }) => {
-      const value = row.getValue("scoreSum") as number;
-      return <div className={value === 0 ? "text-muted-foreground" : ""}>{value}</div>;
-    },
-  },
-  {
-    accessorKey: "capturesSum",
-    header: ({ column }) => <SortableHeader column={column} label="Caps" />,
-    enableHiding: false,
-    cell: ({ row }) => {
-      const value = row.getValue("capturesSum") as number;
-      return <div className={value === 0 ? "text-muted-foreground" : ""}>{value}</div>;
-    },
-  },
-  {
-    accessorKey: "returnsSum",
-    header: ({ column }) => <SortableHeader column={column} label="Ret" />,
-    enableHiding: false,
-    cell: ({ row }) => {
-      const value = row.getValue("returnsSum") as number;
-      return <div className={value === 0 ? "text-muted-foreground" : ""}>{value}</div>;
-    },
-  },
-  {
-    accessorKey: "bcSum",
-    header: ({ column }) => <SortableHeader column={column} label="BC" />,
-    enableHiding: false,
-    cell: ({ row }) => {
-      const value = row.getValue("bcSum") as number;
-      return <div className={value === 0 ? "text-muted-foreground" : ""}>{value}</div>;
-    },
-  },
 
-  // Optional columns - default shown
-  {
-    accessorKey: "flagHoldSum",
-    header: ({ column }) => <SortableHeader column={column} label="FH" />,
+  [ColumnId.flagHoldSum]: {
+    accessorKey: ColumnId.flagHoldSum,
+    header: ({ column }) => <SortableHeader column={column} label={columnConfig[ColumnId.flagHoldSum].label} />,
+    enableHiding: columnConfig[ColumnId.flagHoldSum].canHide,
     cell: ({ row }) => {
-      const milliseconds = row.getValue("flagHoldSum") as number;
+      const milliseconds = row.getValue(ColumnId.flagHoldSum) as number;
       const formatted = new Date(milliseconds).toISOString().slice(11, 19);
       return <div className={milliseconds === 0 ? "text-muted-foreground" : ""}>{formatted}</div>;
     },
   },
-  {
-    accessorKey: "flagGrabsSum",
-    header: ({ column }) => <SortableHeader column={column} label="FG" />,
+
+  [ColumnId.kdr]: {
+    id: ColumnId.kdr,
+    accessorFn: (row) => (row.deaths > 0 ? row.kills / row.deaths : row.kills),
+    header: ({ column }) => <SortableHeader column={column} label={columnConfig[ColumnId.kdr].label} />,
+    enableHiding: columnConfig[ColumnId.kdr].canHide,
     cell: ({ row }) => {
-      const value = row.getValue("flagGrabsSum") as number;
-      return <div className={value === 0 ? "text-muted-foreground" : ""}>{value}</div>;
-    },
-  },
-  {
-    id: "kdr",
-    accessorFn: (row) => {
-      return row.deaths > 0 ? row.kills / row.deaths : row.kills;
-    },
-    header: ({ column }) => <SortableHeader column={column} label="K/D/R" />,
-    cell: ({ row }) => {
-      const deaths = row.original.deaths;
-      const kills = row.original.kills;
+      const { deaths, kills } = row.original;
       const ratio = deaths > 0 ? (kills / deaths).toFixed(2) : kills.toFixed(2);
       const none = kills === 0 && deaths === 0;
       return (
@@ -160,38 +126,18 @@ export const matchPlayersColumns: ColumnDef<MatchPlayerDetail>[] = [
     },
   },
 
-  // Optional columns - default hidden
-  {
-    accessorKey: "clientNumber",
-    header: ({ column }) => <SortableHeader column={column} label="#" />,
-    cell: ({ row }) => (
-      <span>
-        {row.getValue("clientNumber")}
-      </span>
-    ),
-  },
-  {
-    accessorKey: "assistsSum",
-    header: ({ column }) => <SortableHeader column={column} label="Ast" />,
+  [ColumnId.timeSum]: {
+    accessorKey: ColumnId.timeSum,
+    header: ({ column }) => <SortableHeader column={column} label={columnConfig[ColumnId.timeSum].label} />,
+    enableHiding: columnConfig[ColumnId.timeSum].canHide,
     cell: ({ row }) => {
-      const value = row.getValue("assistsSum") as number;
-      return <div className={value === 0 ? "text-muted-foreground" : ""}>{value}</div>;
-    },
-  },
-  {
-    accessorKey: "timeSum",
-    header: ({ column }) => <SortableHeader column={column} label="Time" />,
-    cell: ({ row }) => {
-      const value = row.getValue("timeSum") as number;
+      const value = row.getValue(ColumnId.timeSum) as number;
       return <div className={value === 0 ? "text-muted-foreground" : ""}>{value}m</div>;
     },
   },
-  {
-    accessorKey: "pingMean",
-    header: ({ column }) => <SortableHeader column={column} label="Ping" />,
-    cell: ({ row }) => {
-      const value = row.getValue("pingMean") as number;
-      return <div className={value === 0 ? "text-muted-foreground" : ""}>{value}</div>;
-    },
-  },
-];
+};
+
+// Generate columns in the order defined in columnConfig
+export const matchPlayersColumns: ColumnDef<MatchPlayerDetail>[] = (
+  Object.keys(columnConfig) as ColumnId[]
+).map((id) => customColumns[id] ?? createNumericColumn(id));
