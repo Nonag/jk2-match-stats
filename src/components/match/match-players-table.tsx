@@ -16,14 +16,15 @@ import { ChevronLeft, ChevronRight, Settings2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import {
   Table,
   TableBody,
@@ -33,7 +34,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { matchPlayersColumns } from "./match-players-columns";
-import { columnGroups, columnLabels, defaultColumnVisibility, type ColumnId } from "./match-players-config";
+import {
+  columnGroups,
+  columnLabels,
+  defaultColumnVisibility,
+  type ColumnId,
+} from "./match-players-config";
 import type { MatchPlayerDetail } from "@/lib/db/match";
 
 interface MatchPlayersTableProps {
@@ -97,7 +103,9 @@ export function MatchPlayersTable({
   // No initial sorting - data is pre-sorted by winning team
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(defaultColumnVisibility);
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(
+    defaultColumnVisibility,
+  );
 
   const table = useReactTable({
     data: teamPlayers,
@@ -152,47 +160,81 @@ export function MatchPlayersTable({
           ) : null}
         </h3>
         {!minimal && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+          <Sheet>
+            <SheetTrigger asChild>
               <Button variant="outline" size="sm" className="ml-auto">
-                <Settings2 className="mr-2 h-4 w-4" />
+                <Settings2 />
                 Columns
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48 max-h-96 overflow-y-auto">
-              <DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
-              {columnGroups.map((group) => {
-                const groupColumns = group.columns
-                  .map((colId) => table.getColumn(colId))
-                  .filter((col) => col && col.getCanHide());
+            </SheetTrigger>
+            <SheetContent side="right" className="overflow-y-auto">
+              <SheetHeader>
+                <SheetTitle>Toggle Columns</SheetTitle>
+              </SheetHeader>
+              <div className="flex flex-col gap-4 px-4 pb-4">
+                {columnGroups.map((group) => {
+                  const groupColumns = group.columns
+                    .map((colId) => table.getColumn(colId))
+                    .filter((col) => col && col.getCanHide());
 
-                if (groupColumns.length === 0) return null;
+                  if (groupColumns.length === 0) return null;
 
-                return (
-                  <div key={group.label}>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuLabel className="text-xs text-muted-foreground font-normal">
-                      {group.label}
-                    </DropdownMenuLabel>
-                    {groupColumns.map((column) => {
-                      if (!column) return null;
-                      return (
-                        <DropdownMenuCheckboxItem
-                          key={column.id}
-                          checked={column.getIsVisible()}
-                          onCheckedChange={(value) =>
-                            column.toggleVisibility(!!value)
-                          }
+                  const visibleCount = groupColumns.filter((col) => col?.getIsVisible()).length;
+                  const allVisible = visibleCount === groupColumns.length;
+                  const someVisible = visibleCount > 0 && visibleCount < groupColumns.length;
+
+                  const toggleGroup = (checked: boolean) => {
+                    groupColumns.forEach((col) => col?.toggleVisibility(checked));
+                  };
+
+                  return (
+                    <div key={group.label} className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Checkbox
+                          id={`group-${group.label}`}
+                          checked={allVisible}
+                          data-state={someVisible ? "indeterminate" : undefined}
+                          onCheckedChange={(value) => toggleGroup(!!value)}
+                        />
+                        <Label
+                          htmlFor={`group-${group.label}`}
+                          className="text-sm font-medium text-muted-foreground cursor-pointer"
                         >
-                          {columnLabels[column.id as ColumnId] || column.id}
-                        </DropdownMenuCheckboxItem>
-                      );
-                    })}
-                  </div>
-                );
-              })}
-            </DropdownMenuContent>
-          </DropdownMenu>
+                          {group.label}
+                        </Label>
+                      </div>
+                      <div className="flex flex-col gap-2 ml-6">
+                        {groupColumns.map((column) => {
+                          if (!column) return null;
+                          return (
+                            <div
+                              key={column.id}
+                              className="flex items-center gap-2"
+                            >
+                              <Checkbox
+                                id={column.id}
+                                checked={column.getIsVisible()}
+                                onCheckedChange={(value) =>
+                                  column.toggleVisibility(!!value)
+                                }
+                              />
+                              <Label
+                                htmlFor={column.id}
+                                className="text-sm cursor-pointer"
+                              >
+                                {columnLabels[column.id as ColumnId] ||
+                                  column.id}
+                              </Label>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </SheetContent>
+          </Sheet>
         )}
       </div>
       <div className="overflow-hidden rounded-md border">

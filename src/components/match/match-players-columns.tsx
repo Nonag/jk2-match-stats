@@ -2,16 +2,22 @@
 
 import { Column, ColumnDef } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
 import type { MatchPlayerDetail } from "@/lib/db/match";
 import { columnConfig, ColumnId } from "./match-players-config";
 
 interface SortableHeaderProps {
   column: Column<MatchPlayerDetail, unknown>;
-  label: string;
 }
 
-function SortableHeader({ column, label }: SortableHeaderProps) {
+function SortableHeader({ column }: SortableHeaderProps) {
+  const cfg = columnConfig[column.id as ColumnId];
+  const { shortLabel, label } = cfg;
   const sorted = column.getIsSorted();
 
   const handleClick = (e: React.MouseEvent) => {
@@ -25,36 +31,38 @@ function SortableHeader({ column, label }: SortableHeaderProps) {
   };
 
   return (
-    <div className="flex items-center gap-1">
-      <span>{label}</span>
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-6 w-6"
-        onClick={handleClick}
-      >
-        {sorted === "asc" ? (
-          <ArrowUp className="h-3.5 w-3.5" />
-        ) : sorted === "desc" ? (
-          <ArrowDown className="h-3.5 w-3.5" />
-        ) : (
-          <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground" />
-        )}
-      </Button>
-    </div>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <div className="flex items-center gap-1">
+          <span>{shortLabel}</span>
+          <Button variant="ghost" size="icon" onClick={handleClick}>
+            {sorted === "asc" ? (
+              <ArrowUp />
+            ) : sorted === "desc" ? (
+              <ArrowDown />
+            ) : (
+              <ArrowUpDown className="text-muted-foreground" />
+            )}
+          </Button>
+        </div>
+      </TooltipTrigger>
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
   );
 }
 
 // Default numeric cell renderer - shows value with muted style when 0
 function NumericCell({ value }: { value: number }) {
-  return <div className={value === 0 ? "text-muted-foreground" : ""}>{value}</div>;
+  return (
+    <div className={value === 0 ? "text-muted-foreground" : ""}>{value}</div>
+  );
 }
 
 // Generate a standard column definition for numeric fields
 function createNumericColumn(id: ColumnId): ColumnDef<MatchPlayerDetail> {
   return {
     accessorKey: id,
-    header: ({ column }) => <SortableHeader column={column} label={columnConfig[id].label} />,
+    header: ({ column }) => <SortableHeader column={column} />,
     enableHiding: columnConfig[id].canHide,
     cell: ({ row }) => <NumericCell value={row.getValue(id) as number} />,
   };
@@ -64,14 +72,17 @@ function createNumericColumn(id: ColumnId): ColumnDef<MatchPlayerDetail> {
 const customColumns: Partial<Record<ColumnId, ColumnDef<MatchPlayerDetail>>> = {
   [ColumnId.team]: {
     accessorKey: ColumnId.team,
-    header: ({ column }) => <SortableHeader column={column} label={columnConfig[ColumnId.team].label} />,
+    header: ({ column }) => <SortableHeader column={column} />,
     enableHiding: columnConfig[ColumnId.team].canHide,
     enableSorting: true,
     sortingFn: (rowA, rowB) => {
       const teamOrder = { Red: 0, Blue: 1, Spectator: 2 };
       const teamA = rowA.getValue(ColumnId.team) as string;
       const teamB = rowB.getValue(ColumnId.team) as string;
-      return (teamOrder[teamA as keyof typeof teamOrder] ?? 3) - (teamOrder[teamB as keyof typeof teamOrder] ?? 3);
+      return (
+        (teamOrder[teamA as keyof typeof teamOrder] ?? 3) -
+        (teamOrder[teamB as keyof typeof teamOrder] ?? 3)
+      );
     },
     cell: ({ row }) => {
       const team = row.getValue(ColumnId.team) as string;
@@ -81,7 +92,7 @@ const customColumns: Partial<Record<ColumnId, ColumnDef<MatchPlayerDetail>>> = {
 
   [ColumnId.nameClean]: {
     accessorKey: ColumnId.nameClean,
-    header: ({ column }) => <SortableHeader column={column} label={columnConfig[ColumnId.nameClean].label} />,
+    header: ({ column }) => <SortableHeader column={column} />,
     enableHiding: columnConfig[ColumnId.nameClean].canHide,
     cell: ({ row }) => {
       const nameClean = row.getValue(ColumnId.nameClean) as string;
@@ -90,7 +101,9 @@ const customColumns: Partial<Record<ColumnId, ColumnDef<MatchPlayerDetail>>> = {
         <div className="flex flex-col">
           <span className="font-medium">{nameClean}</span>
           {playerPrimaryName && playerPrimaryName !== nameClean && (
-            <span className="text-xs text-muted-foreground">aka {playerPrimaryName}</span>
+            <span className="text-xs text-muted-foreground">
+              aka {playerPrimaryName}
+            </span>
           )}
         </div>
       );
@@ -99,19 +112,23 @@ const customColumns: Partial<Record<ColumnId, ColumnDef<MatchPlayerDetail>>> = {
 
   [ColumnId.flagHoldSum]: {
     accessorKey: ColumnId.flagHoldSum,
-    header: ({ column }) => <SortableHeader column={column} label={columnConfig[ColumnId.flagHoldSum].label} />,
+    header: ({ column }) => <SortableHeader column={column} />,
     enableHiding: columnConfig[ColumnId.flagHoldSum].canHide,
     cell: ({ row }) => {
       const milliseconds = row.getValue(ColumnId.flagHoldSum) as number;
       const formatted = new Date(milliseconds).toISOString().slice(11, 19);
-      return <div className={milliseconds === 0 ? "text-muted-foreground" : ""}>{formatted}</div>;
+      return (
+        <div className={milliseconds === 0 ? "text-muted-foreground" : ""}>
+          {formatted}
+        </div>
+      );
     },
   },
 
   [ColumnId.kdr]: {
     id: ColumnId.kdr,
     accessorFn: (row) => (row.deaths > 0 ? row.kills / row.deaths : row.kills),
-    header: ({ column }) => <SortableHeader column={column} label={columnConfig[ColumnId.kdr].label} />,
+    header: ({ column }) => <SortableHeader column={column} />,
     enableHiding: columnConfig[ColumnId.kdr].canHide,
     cell: ({ row }) => {
       const { deaths, kills } = row.original;
@@ -119,7 +136,9 @@ const customColumns: Partial<Record<ColumnId, ColumnDef<MatchPlayerDetail>>> = {
       const none = kills === 0 && deaths === 0;
       return (
         <span className={none ? "text-muted-foreground" : ""}>
-          <span>{kills}/{deaths}</span>
+          <span>
+            {kills}/{deaths}
+          </span>
           <span className="text-muted-foreground ml-1">({ratio})</span>
         </span>
       );
@@ -128,11 +147,15 @@ const customColumns: Partial<Record<ColumnId, ColumnDef<MatchPlayerDetail>>> = {
 
   [ColumnId.timeSum]: {
     accessorKey: ColumnId.timeSum,
-    header: ({ column }) => <SortableHeader column={column} label={columnConfig[ColumnId.timeSum].label} />,
+    header: ({ column }) => <SortableHeader column={column} />,
     enableHiding: columnConfig[ColumnId.timeSum].canHide,
     cell: ({ row }) => {
       const value = row.getValue(ColumnId.timeSum) as number;
-      return <div className={value === 0 ? "text-muted-foreground" : ""}>{value}m</div>;
+      return (
+        <div className={value === 0 ? "text-muted-foreground" : ""}>
+          {value}m
+        </div>
+      );
     },
   },
 };
