@@ -115,7 +115,7 @@ export const columnConfig: Record<ColumnId, ColumnConfig> = {
   [ColumnId.mineGrabsNeutral]: { label: "Mine Grabs (Neutral)", shortLabel: "MG-N", group: "mines", isDefault: false, canHide: true },
 
   // Combat stats
-  [ColumnId.kdr]: { label: "Kill/Death Ratio", shortLabel: "K/D/R", group: "combat", isDefault: true, canHide: true },
+  [ColumnId.kdr]: { label: "Kill/Death Ratio", shortLabel: "K/D R", group: "combat", isDefault: true, canHide: true },
   [ColumnId.kills]: { label: "Kills", shortLabel: "K", group: "combat", isDefault: false, canHide: true },
   [ColumnId.deaths]: { label: "Deaths", shortLabel: "D", group: "combat", isDefault: false, canHide: true },
 

@@ -36,24 +36,24 @@ export function MatchDetailHeader({ match }: MatchDetailHeaderProps) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-4">
       <div className="flex items-center gap-4">
-        <div className="flex items-center gap-2">
-          <Badge
-            className={`text-lg px-3 py-1 ${
-              redWins ? "bg-red-500 hover:bg-red-600" : "bg-red-500/40"
+        <div className="flex items-center gap-3">
+          <span
+            className={`text-3xl font-bold ${
+              redWins ? "text-red-500" : "text-red-300 dark:text-red-800"
             }`}
           >
             {match.redScore}
-          </Badge>
-          <span className="text-muted-foreground font-medium">
-            {isDraw ? "=" : "vs"}
           </span>
-          <Badge
-            className={`text-lg px-3 py-1 ${
-              blueWins ? "bg-blue-500 hover:bg-blue-600" : "bg-blue-500/40"
+          <span className="text-3xl font-bold text-muted-foreground">
+            :
+          </span>
+          <span
+            className={`text-3xl font-bold ${
+              blueWins ? "text-blue-500" : "text-blue-300 dark:text-blue-800"
             }`}
           >
             {match.blueScore}
-          </Badge>
+          </span>
         </div>
         <Badge variant="outline">{formatDuration(match.duration)}</Badge>
         <span className="font-medium">{match.serverName}</span>

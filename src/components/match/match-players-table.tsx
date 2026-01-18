@@ -11,7 +11,13 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { ChevronLeft, ChevronRight, Settings2 } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Lock,
+  LockOpen,
+  Settings2,
+} from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -103,29 +109,46 @@ export function MatchPlayersTable({
   // No initial sorting - data is pre-sorted by winning team
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const { settings, setMatchPlayersColumns } = useTableSettings();
+  const { settings, setMatchPlayersColumns, setLockTeamSort } =
+    useTableSettings();
   const columnVisibility = settings.matchPlayersColumns;
+  const lockTeamSort = settings.lockTeamSort;
+
+  // Team sort direction: desc when Blue wins (to put Blue first)
+  const teamSort = useMemo(
+    () => ({ id: "team", desc: winningTeam === "Blue" }),
+    [winningTeam],
+  );
+
+  // When locked, team sort is always first; filter out any user-added team sort to avoid duplicates
+  const effectiveSorting = useMemo((): SortingState => {
+    if (!lockTeamSort || !showBothTeams) {
+      return sorting;
+    }
+    const userSorting = sorting.filter((s) => s.id !== "team");
+    return [teamSort, ...userSorting];
+  }, [lockTeamSort, showBothTeams, sorting, teamSort]);
 
   const table = useReactTable({
-    data: teamPlayers,
     columns: matchPlayersColumns,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    onSortingChange: setSorting,
-    getSortedRowModel: getSortedRowModel(),
-    onColumnFiltersChange: setColumnFilters,
-    getFilteredRowModel: getFilteredRowModel(),
-    onColumnVisibilityChange: setMatchPlayersColumns,
+    data: teamPlayers,
     enableMultiSort: true,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
     initialState: {
       pagination: {
         pageSize: PAGE_SIZE,
       },
     },
+    onColumnFiltersChange: setColumnFilters,
+    onColumnVisibilityChange: setMatchPlayersColumns,
+    onSortingChange: setSorting,
     state: {
-      sorting,
       columnFilters,
       columnVisibility,
+      sorting: effectiveSorting,
     },
   });
 
@@ -159,86 +182,112 @@ export function MatchPlayersTable({
           ) : null}
         </h3>
         {!minimal && (
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="outline" size="sm" className="ml-auto">
-                <Settings2 />
-                Columns
+          <div className="flex items-center gap-2 ml-auto">
+            {showBothTeams && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setLockTeamSort(!lockTeamSort)}
+              >
+                {lockTeamSort ? (
+                  <>
+                    <Lock />
+                    Teams Locked
+                  </>
+                ) : (
+                  <>
+                    <LockOpen />
+                    Teams Unlocked
+                  </>
+                )}
               </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="overflow-y-auto">
-              <SheetHeader>
-                <SheetTitle>Toggle Columns</SheetTitle>
-              </SheetHeader>
-              <div className="flex flex-col gap-4 px-4 pb-4">
-                {columnGroups.map((group) => {
-                  const groupColumns = group.columns
-                    .map((colId) => table.getColumn(colId))
-                    .filter((col) => col && col.getCanHide());
+            )}
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <Settings2 />
+                  Columns
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="overflow-y-auto">
+                <SheetHeader>
+                  <SheetTitle>Table Settings</SheetTitle>
+                </SheetHeader>
+                <div className="flex flex-col gap-4 px-4 pb-4">
+                  <div className="text-sm font-medium text-muted-foreground">
+                    Columns
+                  </div>
+                  {columnGroups.map((group) => {
+                    const groupColumns = group.columns
+                      .map((colId) => table.getColumn(colId))
+                      .filter((col) => col && col.getCanHide());
 
-                  if (groupColumns.length === 0) return null;
+                    if (groupColumns.length === 0) return null;
 
-                  const visibleCount = groupColumns.filter((col) =>
-                    col?.getIsVisible(),
-                  ).length;
-                  const allVisible = visibleCount === groupColumns.length;
-                  const someVisible =
-                    visibleCount > 0 && visibleCount < groupColumns.length;
+                    const visibleCount = groupColumns.filter((col) =>
+                      col?.getIsVisible(),
+                    ).length;
+                    const allVisible = visibleCount === groupColumns.length;
+                    const someVisible =
+                      visibleCount > 0 && visibleCount < groupColumns.length;
 
-                  const toggleGroup = (checked: boolean) => {
-                    groupColumns.forEach((col) =>
-                      col?.toggleVisibility(checked),
-                    );
-                  };
+                    const toggleGroup = (checked: boolean) => {
+                      groupColumns.forEach((col) =>
+                        col?.toggleVisibility(checked),
+                      );
+                    };
 
-                  return (
-                    <div key={group.label} className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <Checkbox
-                          id={`group-${group.label}`}
-                          checked={allVisible}
-                          data-state={someVisible ? "indeterminate" : undefined}
-                          onCheckedChange={(value) => toggleGroup(!!value)}
-                        />
-                        <Label
-                          htmlFor={`group-${group.label}`}
-                          className="text-sm font-medium text-muted-foreground cursor-pointer"
-                        >
-                          {group.label}
-                        </Label>
-                      </div>
-                      <div className="flex flex-col gap-2 ml-6">
-                        {groupColumns.map((column) => {
-                          if (!column) return null;
-                          return (
-                            <div
-                              key={column.id}
-                              className="flex items-center gap-2"
-                            >
-                              <Checkbox
-                                id={column.id}
-                                checked={column.getIsVisible()}
-                                onCheckedChange={(value) =>
-                                  column.toggleVisibility(!!value)
-                                }
-                              />
-                              <Label
-                                htmlFor={column.id}
-                                className="text-sm cursor-pointer"
+                    return (
+                      <div key={group.label} className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Checkbox
+                            id={`group-${group.label}`}
+                            checked={allVisible}
+                            data-state={
+                              someVisible ? "indeterminate" : undefined
+                            }
+                            onCheckedChange={(value) => toggleGroup(!!value)}
+                          />
+                          <Label
+                            htmlFor={`group-${group.label}`}
+                            className="text-sm font-medium text-muted-foreground cursor-pointer"
+                          >
+                            {group.label}
+                          </Label>
+                        </div>
+                        <div className="flex flex-col gap-2 ml-6">
+                          {groupColumns.map((column) => {
+                            if (!column) return null;
+                            return (
+                              <div
+                                key={column.id}
+                                className="flex items-center gap-2"
                               >
-                                {columnLabels[column.id as ColumnId] ||
-                                  column.id}
-                              </Label>
-                            </div>
-                          );
-                        })}
+                                <Checkbox
+                                  id={column.id}
+                                  checked={column.getIsVisible()}
+                                  onCheckedChange={(value) =>
+                                    column.toggleVisibility(!!value)
+                                  }
+                                />
+                                <Label
+                                  htmlFor={column.id}
+                                  className="text-sm cursor-pointer"
+                                >
+                                  {columnLabels[column.id as ColumnId] ||
+                                    column.id}
+                                </Label>
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </SheetContent>
-          </Sheet>
+                    );
+                  })}
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
         )}
       </div>
       <div className="rounded-md border">

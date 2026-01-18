@@ -13,17 +13,20 @@ import { defaultColumnVisibility } from "@/components/match/match-players-config
 const STORAGE_KEY = "table-settings";
 
 interface TableSettings {
+  lockTeamSort: boolean;
   matchPlayersColumns: VisibilityState;
 }
 
 const defaultSettings: TableSettings = {
+  lockTeamSort: true,
   matchPlayersColumns: defaultColumnVisibility,
 };
 
 interface TableSettingsContextValue {
-  settings: TableSettings;
-  setMatchPlayersColumns: (updater: Updater<VisibilityState>) => void;
   resetMatchPlayersColumns: () => void;
+  setLockTeamSort: (locked: boolean) => void;
+  setMatchPlayersColumns: (updater: Updater<VisibilityState>) => void;
+  settings: TableSettings;
 }
 
 const TableSettingsContext = createContext<TableSettingsContextValue | null>(
@@ -48,8 +51,8 @@ function subscribe(callback: () => void): () => void {
 
 function updateSettings(newSettings: TableSettings) {
   currentSettings = newSettings;
-  sessionStorage.setItem(STORAGE_KEY, JSON.stringify(newSettings));
   listeners.forEach((listener) => listener());
+  sessionStorage.setItem(STORAGE_KEY, JSON.stringify(newSettings));
 }
 
 // Initialize from storage on first load (client-side only)
@@ -85,12 +88,17 @@ export function TableSettingsProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const setLockTeamSort = useCallback((locked: boolean) => {
+    updateSettings({ ...currentSettings, lockTeamSort: locked });
+  }, []);
+
   return (
     <TableSettingsContext.Provider
       value={{
-        settings,
-        setMatchPlayersColumns,
         resetMatchPlayersColumns,
+        setLockTeamSort,
+        setMatchPlayersColumns,
+        settings,
       }}
     >
       {children}
