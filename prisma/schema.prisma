@@ -110,6 +110,7 @@ model MatchPlayer {
   // Kill/Return breakdown by type
   dfaKills        Int
   dfaReturns      Int
+  dfaAttempts     Int
   redKills        Int
   redReturns      Int
   yelKills        Int
@@ -121,14 +122,17 @@ model MatchPlayer {
   dbsAttempts     Int
   bsKills         Int
   bsReturns       Int
+  bsAttempts      Int
   mineKills       Int
   mineReturns     Int
   upcutKills      Int
   upcutReturns    Int
   ydfaKills       Int
   ydfaReturns     Int
+  ydfaAttempts    Int
   blubsKills      Int
   blubsReturns    Int
+  blubsAttempts   Int
   doomKills       Int
   doomReturns     Int
   turKills        Int
@@ -137,6 +141,12 @@ model MatchPlayer {
   unknReturns     Int
   idleKills       Int
   idleReturns     Int
+
+  // Blocking stats
+  blocksTeam        Int
+  blocksTeamCapper  Int
+  blocksEnemy       Int
+  blocksEnemyCapper Int
 
   createdAt       DateTime @default(now())
 }

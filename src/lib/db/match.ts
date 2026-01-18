@@ -84,6 +84,7 @@ export interface MatchPlayerDetail {
   // Kill/Return breakdown
   dfaKills: number;
   dfaReturns: number;
+  dfaAttempts: number;
   redKills: number;
   redReturns: number;
   yelKills: number;
@@ -95,14 +96,17 @@ export interface MatchPlayerDetail {
   dbsAttempts: number;
   bsKills: number;
   bsReturns: number;
+  bsAttempts: number;
   mineKills: number;
   mineReturns: number;
   upcutKills: number;
   upcutReturns: number;
   ydfaKills: number;
   ydfaReturns: number;
+  ydfaAttempts: number;
   blubsKills: number;
   blubsReturns: number;
+  blubsAttempts: number;
   doomKills: number;
   doomReturns: number;
   turKills: number;
@@ -111,6 +115,12 @@ export interface MatchPlayerDetail {
   unknReturns: number;
   idleKills: number;
   idleReturns: number;
+
+  // Blocking stats
+  blocksTeam: number;
+  blocksTeamCapper: number;
+  blocksEnemy: number;
+  blocksEnemyCapper: number;
 
   playerId: string | null;
   playerPrimaryName: string | null;
@@ -216,6 +226,7 @@ export async function getMatchById(id: string): Promise<MatchDetail | null> {
 
       dfaKills: matchPlayer.dfaKills,
       dfaReturns: matchPlayer.dfaReturns,
+      dfaAttempts: matchPlayer.dfaAttempts,
       redKills: matchPlayer.redKills,
       redReturns: matchPlayer.redReturns,
       yelKills: matchPlayer.yelKills,
@@ -227,14 +238,17 @@ export async function getMatchById(id: string): Promise<MatchDetail | null> {
       dbsAttempts: matchPlayer.dbsAttempts,
       bsKills: matchPlayer.bsKills,
       bsReturns: matchPlayer.bsReturns,
+      bsAttempts: matchPlayer.bsAttempts,
       mineKills: matchPlayer.mineKills,
       mineReturns: matchPlayer.mineReturns,
       upcutKills: matchPlayer.upcutKills,
       upcutReturns: matchPlayer.upcutReturns,
       ydfaKills: matchPlayer.ydfaKills,
       ydfaReturns: matchPlayer.ydfaReturns,
+      ydfaAttempts: matchPlayer.ydfaAttempts,
       blubsKills: matchPlayer.blubsKills,
       blubsReturns: matchPlayer.blubsReturns,
+      blubsAttempts: matchPlayer.blubsAttempts,
       doomKills: matchPlayer.doomKills,
       doomReturns: matchPlayer.doomReturns,
       turKills: matchPlayer.turKills,
@@ -243,6 +257,12 @@ export async function getMatchById(id: string): Promise<MatchDetail | null> {
       unknReturns: matchPlayer.unknReturns,
       idleKills: matchPlayer.idleKills,
       idleReturns: matchPlayer.idleReturns,
+
+      // Blocking stats
+      blocksTeam: matchPlayer.blocksTeam,
+      blocksTeamCapper: matchPlayer.blocksTeamCapper,
+      blocksEnemy: matchPlayer.blocksEnemy,
+      blocksEnemyCapper: matchPlayer.blocksEnemyCapper,
 
       playerId: matchPlayer.playerId,
       playerPrimaryName: matchPlayer.player?.primaryName ?? null,
@@ -322,6 +342,7 @@ export async function importMatch(data: ParsedMatchData): Promise<{ id: string }
 
           dfaKills: player.dfaKills,
           dfaReturns: player.dfaReturns,
+          dfaAttempts: player.dfaAttempts,
           redKills: player.redKills,
           redReturns: player.redReturns,
           yelKills: player.yelKills,
@@ -333,14 +354,17 @@ export async function importMatch(data: ParsedMatchData): Promise<{ id: string }
           dbsAttempts: player.dbsAttempts,
           bsKills: player.bsKills,
           bsReturns: player.bsReturns,
+          bsAttempts: player.bsAttempts,
           mineKills: player.mineKills,
           mineReturns: player.mineReturns,
           upcutKills: player.upcutKills,
           upcutReturns: player.upcutReturns,
           ydfaKills: player.ydfaKills,
           ydfaReturns: player.ydfaReturns,
+          ydfaAttempts: player.ydfaAttempts,
           blubsKills: player.blubsKills,
           blubsReturns: player.blubsReturns,
+          blubsAttempts: player.blubsAttempts,
           doomKills: player.doomKills,
           doomReturns: player.doomReturns,
           turKills: player.turKills,
@@ -349,6 +373,12 @@ export async function importMatch(data: ParsedMatchData): Promise<{ id: string }
           unknReturns: player.unknReturns,
           idleKills: player.idleKills,
           idleReturns: player.idleReturns,
+
+          // Blocking stats
+          blocksTeam: player.blocksTeam,
+          blocksTeamCapper: player.blocksTeamCapper,
+          blocksEnemy: player.blocksEnemy,
+          blocksEnemyCapper: player.blocksEnemyCapper,
         })),
       },
     },

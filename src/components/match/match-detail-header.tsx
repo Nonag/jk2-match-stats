@@ -31,7 +31,6 @@ function formatDuration(minutes: number) {
 export function MatchDetailHeader({ match }: MatchDetailHeaderProps) {
   const redWins = match.redScore > match.blueScore;
   const blueWins = match.blueScore > match.redScore;
-  const isDraw = match.redScore === match.blueScore;
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-4">

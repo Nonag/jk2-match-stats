@@ -55,6 +55,7 @@ interface CSVPlayerRow {
   // Kill/Return breakdown
   "DFA-KILLS": string;
   "DFA-RETURNS": string;
+  "DFA-ATTEMPTS": string;
   "RED-KILLS": string;
   "RED-RETURNS": string;
   "YEL-KILLS": string;
@@ -66,14 +67,17 @@ interface CSVPlayerRow {
   "DBS-ATTEMPTS": string;
   "BS-KILLS": string;
   "BS-RETURNS": string;
+  "BS-ATTEMPTS": string;
   "MINE-KILLS": string;
   "MINE-RETURNS": string;
   "UPCUT-KILLS": string;
   "UPCUT-RETURNS": string;
   "YDFA-KILLS": string;
   "YDFA-RETURNS": string;
+  "YDFA-ATTEMPTS": string;
   "BLUBS-KILLS": string;
   "BLUBS-RETURNS": string;
+  "BLUBS-ATTEMPTS": string;
   "DOOM-KILLS": string;
   "DOOM-RETURNS": string;
   "TUR-KILLS": string;
@@ -82,6 +86,11 @@ interface CSVPlayerRow {
   "UNKN-RETURNS": string;
   "IDLE-KILLS": string;
   "IDLE-RETURNS": string;
+  // Blocking stats
+  "BLOCKS-TEAM": string;
+  "BLOCKS-TEAMCAPPER": string;
+  "BLOCKS-ENEMY": string;
+  "BLOCKS-ENEMYCAPPER": string;
 }
 
 interface ParsedPlayer {
@@ -144,6 +153,7 @@ interface ParsedPlayer {
   // Kill/Return breakdown
   dfaKills: number;
   dfaReturns: number;
+  dfaAttempts: number;
   redKills: number;
   redReturns: number;
   yelKills: number;
@@ -155,14 +165,17 @@ interface ParsedPlayer {
   dbsAttempts: number;
   bsKills: number;
   bsReturns: number;
+  bsAttempts: number;
   mineKills: number;
   mineReturns: number;
   upcutKills: number;
   upcutReturns: number;
   ydfaKills: number;
   ydfaReturns: number;
+  ydfaAttempts: number;
   blubsKills: number;
   blubsReturns: number;
+  blubsAttempts: number;
   doomKills: number;
   doomReturns: number;
   turKills: number;
@@ -171,6 +184,12 @@ interface ParsedPlayer {
   unknReturns: number;
   idleKills: number;
   idleReturns: number;
+
+  // Blocking stats
+  blocksTeam: number;
+  blocksTeamCapper: number;
+  blocksEnemy: number;
+  blocksEnemyCapper: number;
 }
 
 function parseFileName(fileName: string): {
@@ -287,6 +306,7 @@ function parseCSV(csvContent: string, fileName: string) {
       // Kill/Return breakdown
       dfaKills: parseInt(row["DFA-KILLS"]) || 0,
       dfaReturns: parseInt(row["DFA-RETURNS"]) || 0,
+      dfaAttempts: parseInt(row["DFA-ATTEMPTS"]) || 0,
       redKills: parseInt(row["RED-KILLS"]) || 0,
       redReturns: parseInt(row["RED-RETURNS"]) || 0,
       yelKills: parseInt(row["YEL-KILLS"]) || 0,
@@ -298,14 +318,17 @@ function parseCSV(csvContent: string, fileName: string) {
       dbsAttempts: parseInt(row["DBS-ATTEMPTS"]) || 0,
       bsKills: parseInt(row["BS-KILLS"]) || 0,
       bsReturns: parseInt(row["BS-RETURNS"]) || 0,
+      bsAttempts: parseInt(row["BS-ATTEMPTS"]) || 0,
       mineKills: parseInt(row["MINE-KILLS"]) || 0,
       mineReturns: parseInt(row["MINE-RETURNS"]) || 0,
       upcutKills: parseInt(row["UPCUT-KILLS"]) || 0,
       upcutReturns: parseInt(row["UPCUT-RETURNS"]) || 0,
       ydfaKills: parseInt(row["YDFA-KILLS"]) || 0,
       ydfaReturns: parseInt(row["YDFA-RETURNS"]) || 0,
+      ydfaAttempts: parseInt(row["YDFA-ATTEMPTS"]) || 0,
       blubsKills: parseInt(row["BLUBS-KILLS"]) || 0,
       blubsReturns: parseInt(row["BLUBS-RETURNS"]) || 0,
+      blubsAttempts: parseInt(row["BLUBS-ATTEMPTS"]) || 0,
       doomKills: parseInt(row["DOOM-KILLS"]) || 0,
       doomReturns: parseInt(row["DOOM-RETURNS"]) || 0,
       turKills: parseInt(row["TUR-KILLS"]) || 0,
@@ -314,6 +337,12 @@ function parseCSV(csvContent: string, fileName: string) {
       unknReturns: parseInt(row["UNKN-RETURNS"]) || 0,
       idleKills: parseInt(row["IDLE-KILLS"]) || 0,
       idleReturns: parseInt(row["IDLE-RETURNS"]) || 0,
+
+      // Blocking stats
+      blocksTeam: parseInt(row["BLOCKS-TEAM"]) || 0,
+      blocksTeamCapper: parseInt(row["BLOCKS-TEAMCAPPER"]) || 0,
+      blocksEnemy: parseInt(row["BLOCKS-ENEMY"]) || 0,
+      blocksEnemyCapper: parseInt(row["BLOCKS-ENEMYCAPPER"]) || 0,
     }));
 
   return {
@@ -460,6 +489,7 @@ async function main() {
             // Kill/Return breakdown
             dfaKills: player.dfaKills,
             dfaReturns: player.dfaReturns,
+            dfaAttempts: player.dfaAttempts,
             redKills: player.redKills,
             redReturns: player.redReturns,
             yelKills: player.yelKills,
@@ -471,14 +501,17 @@ async function main() {
             dbsAttempts: player.dbsAttempts,
             bsKills: player.bsKills,
             bsReturns: player.bsReturns,
+            bsAttempts: player.bsAttempts,
             mineKills: player.mineKills,
             mineReturns: player.mineReturns,
             upcutKills: player.upcutKills,
             upcutReturns: player.upcutReturns,
             ydfaKills: player.ydfaKills,
             ydfaReturns: player.ydfaReturns,
+            ydfaAttempts: player.ydfaAttempts,
             blubsKills: player.blubsKills,
             blubsReturns: player.blubsReturns,
+            blubsAttempts: player.blubsAttempts,
             doomKills: player.doomKills,
             doomReturns: player.doomReturns,
             turKills: player.turKills,
@@ -487,6 +520,12 @@ async function main() {
             unknReturns: player.unknReturns,
             idleKills: player.idleKills,
             idleReturns: player.idleReturns,
+
+            // Blocking stats
+            blocksTeam: player.blocksTeam,
+            blocksTeamCapper: player.blocksTeamCapper,
+            blocksEnemy: player.blocksEnemy,
+            blocksEnemyCapper: player.blocksEnemyCapper,
           })),
         },
       },

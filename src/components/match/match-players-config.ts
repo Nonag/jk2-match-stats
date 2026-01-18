@@ -18,6 +18,7 @@ export interface ColumnConfig {
 }
 
 export type ColumnGroup =
+  | "blocks"
   | "combat"
   | "connection"
   | "fixed"
@@ -27,6 +28,7 @@ export type ColumnGroup =
   | "returnBreakdown";
 
 export const columnGroupLabels: Record<ColumnGroup, string> = {
+  blocks: "Blocking",
   combat: "Combat",
   connection: "Connection",
   fixed: "Fixed",
@@ -38,10 +40,16 @@ export const columnGroupLabels: Record<ColumnGroup, string> = {
 
 export enum ColumnId {
   bcSum = "bcSum",
+  blubsAttempts = "blubsAttempts",
   blubsKills = "blubsKills",
   blubsReturns = "blubsReturns",
+  blocksEnemy = "blocksEnemy",
+  blocksEnemyCapper = "blocksEnemyCapper",
+  blocksTeam = "blocksTeam",
+  blocksTeamCapper = "blocksTeamCapper",
   bluKills = "bluKills",
   bluReturns = "bluReturns",
+  bsAttempts = "bsAttempts",
   bsKills = "bsKills",
   bsReturns = "bsReturns",
   capturesSum = "capturesSum",
@@ -50,6 +58,7 @@ export enum ColumnId {
   dbsKills = "dbsKills",
   dbsReturns = "dbsReturns",
   deaths = "deaths",
+  dfaAttempts = "dfaAttempts",
   dfaKills = "dfaKills",
   dfaReturns = "dfaReturns",
   doomKills = "doomKills",
@@ -80,6 +89,7 @@ export enum ColumnId {
   unknReturns = "unknReturns",
   upcutKills = "upcutKills",
   upcutReturns = "upcutReturns",
+  ydfaAttempts = "ydfaAttempts",
   ydfaKills = "ydfaKills",
   ydfaReturns = "ydfaReturns",
   yelKills = "yelKills",
@@ -119,6 +129,12 @@ export const columnConfig: Record<ColumnId, ColumnConfig> = {
   [ColumnId.kills]: { label: "Kills", shortLabel: "K", group: "combat", isDefault: false, canHide: true },
   [ColumnId.deaths]: { label: "Deaths", shortLabel: "D", group: "combat", isDefault: false, canHide: true },
 
+  // Blocking stats
+  [ColumnId.blocksEnemy]: { label: "Enemy Blocks", shortLabel: "Blk-E", group: "blocks", isDefault: false, canHide: true },
+  [ColumnId.blocksEnemyCapper]: { label: "Enemy Capper Blocks", shortLabel: "Blk-EC", group: "blocks", isDefault: false, canHide: true },
+  [ColumnId.blocksTeam]: { label: "Team Blocks", shortLabel: "Blk-T", group: "blocks", isDefault: false, canHide: true },
+  [ColumnId.blocksTeamCapper]: { label: "Team Capper Blocks", shortLabel: "Blk-TC", group: "blocks", isDefault: false, canHide: true },
+
   // Kill breakdown
   [ColumnId.dfaKills]: { label: "DFA Kills", shortLabel: "DFA-K", group: "killBreakdown", isDefault: false, canHide: true },
   [ColumnId.redKills]: { label: "Red Stance Kills", shortLabel: "Red-K", group: "killBreakdown", isDefault: false, canHide: true },
@@ -137,16 +153,20 @@ export const columnConfig: Record<ColumnId, ColumnConfig> = {
 
   // Return breakdown
   [ColumnId.dfaReturns]: { label: "DFA Returns", shortLabel: "DFA-R", group: "returnBreakdown", isDefault: false, canHide: true },
+  [ColumnId.dfaAttempts]: { label: "DFA Attempts", shortLabel: "DFA-A", group: "returnBreakdown", isDefault: false, canHide: true },
   [ColumnId.redReturns]: { label: "Red Stance Returns", shortLabel: "Red-R", group: "returnBreakdown", isDefault: false, canHide: true },
   [ColumnId.yelReturns]: { label: "Yellow Stance Returns", shortLabel: "Yel-R", group: "returnBreakdown", isDefault: false, canHide: true },
   [ColumnId.bluReturns]: { label: "Blue Stance Returns", shortLabel: "Blu-R", group: "returnBreakdown", isDefault: false, canHide: true },
   [ColumnId.dbsReturns]: { label: "DBS Returns", shortLabel: "DBS-R", group: "returnBreakdown", isDefault: false, canHide: true },
   [ColumnId.dbsAttempts]: { label: "DBS Attempts", shortLabel: "DBS-A", group: "returnBreakdown", isDefault: false, canHide: true },
   [ColumnId.bsReturns]: { label: "Backstab Returns", shortLabel: "BS-R", group: "returnBreakdown", isDefault: false, canHide: true },
+  [ColumnId.bsAttempts]: { label: "Backstab Attempts", shortLabel: "BS-A", group: "returnBreakdown", isDefault: false, canHide: true },
   [ColumnId.mineReturns]: { label: "Mine Returns", shortLabel: "Mine-R", group: "returnBreakdown", isDefault: false, canHide: true },
   [ColumnId.upcutReturns]: { label: "Uppercut Returns", shortLabel: "Up-R", group: "returnBreakdown", isDefault: false, canHide: true },
   [ColumnId.ydfaReturns]: { label: "YDFA Returns", shortLabel: "YDFA-R", group: "returnBreakdown", isDefault: false, canHide: true },
+  [ColumnId.ydfaAttempts]: { label: "YDFA Attempts", shortLabel: "YDFA-A", group: "returnBreakdown", isDefault: false, canHide: true },
   [ColumnId.blubsReturns]: { label: "Blue Backstab Returns", shortLabel: "BBS-R", group: "returnBreakdown", isDefault: false, canHide: true },
+  [ColumnId.blubsAttempts]: { label: "Blue Backstab Attempts", shortLabel: "BBS-A", group: "returnBreakdown", isDefault: false, canHide: true },
   [ColumnId.doomReturns]: { label: "Doom Returns", shortLabel: "Doom-R", group: "returnBreakdown", isDefault: false, canHide: true },
   [ColumnId.turReturns]: { label: "Turret Returns", shortLabel: "Tur-R", group: "returnBreakdown", isDefault: false, canHide: true },
   [ColumnId.unknReturns]: { label: "Unknown Returns", shortLabel: "Unk-R", group: "returnBreakdown", isDefault: false, canHide: true },
