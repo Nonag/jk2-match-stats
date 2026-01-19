@@ -44,6 +44,7 @@ import { matchPlayersColumns } from "./match-players-columns";
 import {
   columnGroups,
   columnLabels,
+  type ColumnGroupItem,
   type ColumnId,
 } from "./match-players-config";
 import type { MatchPlayerDetail } from "@/lib/db/match";
@@ -68,6 +69,88 @@ function getTeamStyles(team: "Red" | "Blue" | "Spectator") {
   return {
     badge: "bg-muted text-muted-foreground",
   };
+}
+
+interface ColumnGroupSectionProps {
+  group: ColumnGroupItem;
+  table: ReturnType<typeof useReactTable<MatchPlayerDetail>>;
+  depth?: number;
+}
+
+function ColumnGroupSection({ group, table, depth = 0 }: ColumnGroupSectionProps) {
+  // Get all columns for this group (including from subgroups for parent toggle)
+  const getAllColumns = (grp: ColumnGroupItem): ColumnId[] => {
+    const cols = [...grp.columns];
+    if (grp.subgroups) {
+      grp.subgroups.forEach((subgroup) => cols.push(...getAllColumns(subgroup)));
+    }
+    return cols;
+  };
+
+  const allColumnIds = getAllColumns(group);
+  const groupColumns = allColumnIds
+    .map((colId) => table.getColumn(colId))
+    .filter((col) => col && col.getCanHide());
+
+  if (groupColumns.length === 0 && !group.subgroups?.length) return null;
+
+  const visibleCount = groupColumns.filter((col) => col?.getIsVisible()).length;
+  const allVisible = visibleCount === groupColumns.length && groupColumns.length > 0;
+  const someVisible = visibleCount > 0 && visibleCount < groupColumns.length;
+
+  const toggleGroup = (checked: boolean) => {
+    groupColumns.forEach((col) => col?.toggleVisibility(checked));
+  };
+
+  const directColumns = group.columns
+    .map((colId) => table.getColumn(colId))
+    .filter((col) => col && col.getCanHide());
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center gap-2" style={{ marginLeft: depth * 16 }}>
+        <Checkbox
+          id={`group-${group.label}`}
+          checked={allVisible}
+          data-state={someVisible ? "indeterminate" : undefined}
+          onCheckedChange={(value) => toggleGroup(!!value)}
+        />
+        <Label
+          htmlFor={`group-${group.label}`}
+          className="text-sm font-medium text-muted-foreground cursor-pointer"
+        >
+          {group.label}
+        </Label>
+      </div>
+      {directColumns.length > 0 && (
+        <div className="flex flex-col gap-2" style={{ marginLeft: (depth + 1) * 16 + 8 }}>
+          {directColumns.map((column) => {
+            if (!column) return null;
+            return (
+              <div key={column.id} className="flex items-center gap-2">
+                <Checkbox
+                  id={column.id}
+                  checked={column.getIsVisible()}
+                  onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                />
+                <Label htmlFor={column.id} className="text-sm cursor-pointer">
+                  {columnLabels[column.id as ColumnId] || column.id}
+                </Label>
+              </div>
+            );
+          })}
+        </div>
+      )}
+      {group.subgroups?.map((subgroup) => (
+        <ColumnGroupSection
+          key={subgroup.label}
+          group={subgroup}
+          table={table}
+          depth={depth + 1}
+        />
+      ))}
+    </div>
+  );
 }
 
 const PAGE_SIZE = 14;
@@ -217,73 +300,13 @@ export function MatchPlayersTable({
                   <div className="text-sm font-medium text-muted-foreground">
                     Columns
                   </div>
-                  {columnGroups.map((group) => {
-                    const groupColumns = group.columns
-                      .map((colId) => table.getColumn(colId))
-                      .filter((col) => col && col.getCanHide());
-
-                    if (groupColumns.length === 0) return null;
-
-                    const visibleCount = groupColumns.filter((col) =>
-                      col?.getIsVisible(),
-                    ).length;
-                    const allVisible = visibleCount === groupColumns.length;
-                    const someVisible =
-                      visibleCount > 0 && visibleCount < groupColumns.length;
-
-                    const toggleGroup = (checked: boolean) => {
-                      groupColumns.forEach((col) =>
-                        col?.toggleVisibility(checked),
-                      );
-                    };
-
-                    return (
-                      <div key={group.label} className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <Checkbox
-                            id={`group-${group.label}`}
-                            checked={allVisible}
-                            data-state={
-                              someVisible ? "indeterminate" : undefined
-                            }
-                            onCheckedChange={(value) => toggleGroup(!!value)}
-                          />
-                          <Label
-                            htmlFor={`group-${group.label}`}
-                            className="text-sm font-medium text-muted-foreground cursor-pointer"
-                          >
-                            {group.label}
-                          </Label>
-                        </div>
-                        <div className="flex flex-col gap-2 ml-6">
-                          {groupColumns.map((column) => {
-                            if (!column) return null;
-                            return (
-                              <div
-                                key={column.id}
-                                className="flex items-center gap-2"
-                              >
-                                <Checkbox
-                                  id={column.id}
-                                  checked={column.getIsVisible()}
-                                  onCheckedChange={(value) =>
-                                    column.toggleVisibility(!!value)
-                                  }
-                                />
-                                <Label
-                                  htmlFor={column.id}
-                                  className="text-sm cursor-pointer"
-                                >
-                                  {columnLabels[column.id as ColumnId] ||
-                                    column.id}
-                                </Label>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    );
-                  })}
+                  {columnGroups.map((group) => (
+                    <ColumnGroupSection
+                      key={group.label}
+                      group={group}
+                      table={table}
+                    />
+                  ))}
                 </div>
               </SheetContent>
             </Sheet>
@@ -301,7 +324,7 @@ export function MatchPlayersTable({
                     <TableHead
                       key={header.id}
                       className={cn(
-                        "bg-background group-hover:bg-muted border-b border-zinc-200 dark:border-zinc-800",
+                        "bg-accent group-hover:bg-muted border-b border-zinc-200 dark:border-zinc-800",
                         isSticky && "sticky left-0",
                       )}
                     >
