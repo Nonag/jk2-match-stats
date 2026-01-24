@@ -12,8 +12,6 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import {
-  ChevronLeft,
-  ChevronRight,
   Lock,
   LockOpen,
   Settings2,
@@ -23,6 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
+import { TablePagination } from "@/components/common/table-pagination";
 import { Label } from "@/components/ui/label";
 import {
   Sheet,
@@ -384,33 +383,7 @@ export function MatchPlayersTable({
       </div>
 
       {showPagination && (
-        <div className="flex items-center justify-end space-x-2 py-4">
-          <div className="text-muted-foreground flex-1 text-sm">
-            {totalRows} player(s)
-          </div>
-          <div className="flex items-center space-x-2">
-            <Button
-              variant="outline"
-              size="icon"
-              className="size-8"
-              onClick={() => table.previousPage()}
-              disabled={!table.getCanPreviousPage()}
-            >
-              <span className="sr-only">Go to previous page</span>
-              <ChevronLeft />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              className="size-8"
-              onClick={() => table.nextPage()}
-              disabled={!table.getCanNextPage()}
-            >
-              <span className="sr-only">Go to next page</span>
-              <ChevronRight />
-            </Button>
-          </div>
-        </div>
+        <TablePagination table={table} rowCountLabel="player(s)" />
       )}
     </div>
   );

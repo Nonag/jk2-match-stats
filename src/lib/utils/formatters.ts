@@ -39,5 +39,5 @@ export function formatPeriod(days: number, relative: "this" | "previous" = "this
  */
 export function formatDate(input: Date | string): string {
   const date = typeof input === "string" ? new Date(input) : input;
-  return format(date, "EEEE, MMMM d, yyyy 'at' h:mm a");
+  return format(date, "yyyy.MM.dd HH:mm");
 }

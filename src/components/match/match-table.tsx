@@ -13,12 +13,13 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { addDays, format, subDays, subMonths, subYears } from "date-fns";
-import { CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
+import { CalendarIcon } from "lucide-react";
 import { DateRange } from "react-day-picker";
 
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
 import { Calendar } from "@/components/ui/calendar";
+import { TablePagination } from "@/components/common/table-pagination";
 import {
   Popover,
   PopoverContent,
@@ -245,33 +246,7 @@ export function MatchTable({
           </TableBody>
         </Table>
       </div>
-      <div className="flex items-center justify-end space-x-2 py-4">
-        <div className="text-muted-foreground flex-1 text-sm">
-          {table.getFilteredRowModel().rows.length} match(es)
-        </div>
-        <div className="flex items-center space-x-2">
-          <Button
-            className="size-8"
-            disabled={!table.getCanPreviousPage()}
-            onClick={() => table.previousPage()}
-            size="icon"
-            variant="outline"
-          >
-            <span className="sr-only">Go to previous page</span>
-            <ChevronLeft />
-          </Button>
-          <Button
-            className="size-8"
-            disabled={!table.getCanNextPage()}
-            onClick={() => table.nextPage()}
-            size="icon"
-            variant="outline"
-          >
-            <span className="sr-only">Go to next page</span>
-            <ChevronRight />
-          </Button>
-        </div>
-      </div>
+      <TablePagination table={table} rowCountLabel="match(es)" />
     </div>
   );
 }

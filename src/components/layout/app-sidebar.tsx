@@ -51,7 +51,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               size="lg"
             >
               <Link href="/">
-                <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-7 items-center justify-center rounded-md">
+                <div className="bg-foreground text-background flex aspect-square size-7 items-center justify-center rounded-md">
                   <Gamepad2 className="size-4" />
                 </div>
                 <span className="truncate font-semibold">JK2 Match Stats</span>
