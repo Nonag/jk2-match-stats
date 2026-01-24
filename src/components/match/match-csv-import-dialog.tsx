@@ -12,7 +12,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { useImportMatch } from "@/hooks/use-matches";
+import { useImportMatch } from "@/lib/queries";
 import { toast } from "sonner";
 
 interface MatchCSVImportDialogProps {

@@ -3,7 +3,7 @@
 import { use } from "react";
 import { notFound } from "next/navigation";
 import { MatchDetailHeader, MatchPlayersTable } from "@/components/match";
-import { useMatch } from "@/hooks/use-matches";
+import { useMatch } from "@/lib/queries";
 import { Separator } from "@/components/ui/separator";
 
 interface MatchDetailPageProps {

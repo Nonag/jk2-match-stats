@@ -1,7 +1,7 @@
 "use client";
 
 import { PlayerTable } from "@/components/player";
-import { usePlayers } from "@/hooks/use-players";
+import { usePlayers } from "@/lib/queries";
 
 export default function PlayersPage() {
   const { players, loading } = usePlayers();
