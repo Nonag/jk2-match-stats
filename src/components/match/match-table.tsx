@@ -6,8 +6,8 @@ import { matchColumns } from "./match-columns";
 import type { MatchSummary } from "@/lib/db/match";
 
 interface MatchTableProps {
-  matches: MatchSummary[];
   loading?: boolean;
+  matches: MatchSummary[];
 }
 
 export function MatchTable({ matches, loading }: MatchTableProps) {

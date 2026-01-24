@@ -77,12 +77,12 @@ function NumericCell({ value }: { value: number }) {
 
 // Combined cell renderer - displays as kills/returns/attempts
 interface CombinedCellProps {
+  attempts?: number;
   kills: number;
   returns: number;
-  attempts?: number;
 }
 
-function CombinedCell({ kills, returns, attempts }: CombinedCellProps) {
+function CombinedCell({ attempts, kills, returns }: CombinedCellProps) {
   const isEmpty = kills === 0 && returns === 0 && (attempts === undefined || attempts === 0);
   return (
     <div className={isEmpty ? "text-muted-foreground" : ""}>

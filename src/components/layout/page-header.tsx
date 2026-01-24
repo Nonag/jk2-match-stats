@@ -2,10 +2,10 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
 interface PageHeaderProps {
-  title: string;
-  description?: string;
   backHref?: string;
   children?: React.ReactNode;
+  description?: string;
+  title: string;
 }
 
 export function PageHeader({

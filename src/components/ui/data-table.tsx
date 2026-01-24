@@ -30,9 +30,9 @@ import { useState } from "react";
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
+  onRowClick?: (row: TData) => void;
   searchKey?: string;
   searchPlaceholder?: string;
-  onRowClick?: (row: TData) => void;
 }
 
 export function DataTable<TData, TValue>({

@@ -50,9 +50,9 @@ import {
 import type { MatchPlayerDetail } from "@/lib/db/match";
 
 interface MatchPlayersTableProps {
+  minimal?: boolean;
   players: MatchPlayerDetail[];
   team?: "Red" | "Blue" | "Spectator";
-  minimal?: boolean;
 }
 
 function getTeamStyles(team: "Red" | "Blue" | "Spectator") {
@@ -72,12 +72,12 @@ function getTeamStyles(team: "Red" | "Blue" | "Spectator") {
 }
 
 interface ColumnGroupSectionProps {
+  depth?: number;
   group: ColumnGroupItem;
   table: ReturnType<typeof useReactTable<MatchPlayerDetail>>;
-  depth?: number;
 }
 
-function ColumnGroupSection({ group, table, depth = 0 }: ColumnGroupSectionProps) {
+function ColumnGroupSection({ depth = 0, group, table }: ColumnGroupSectionProps) {
   // Get all columns for this group (including from subgroups for parent toggle)
   const getAllColumns = (grp: ColumnGroupItem): ColumnId[] => {
     const cols = [...grp.columns];
@@ -238,10 +238,6 @@ export function MatchPlayersTable({
   const totalRows = table.getFilteredRowModel().rows.length;
   const showPagination = totalRows > PAGE_SIZE;
 
-  if (teamPlayers.length === 0) {
-    return null;
-  }
-
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between py-2">
@@ -386,6 +382,7 @@ export function MatchPlayersTable({
           </TableBody>
         </Table>
       </div>
+
       {showPagination && (
         <div className="flex items-center justify-end space-x-2 py-4">
           <div className="text-muted-foreground flex-1 text-sm">

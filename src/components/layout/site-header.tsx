@@ -15,8 +15,8 @@ import {
 import { ModeToggle } from "./mode-toggle";
 
 interface BreadcrumbSegment {
-  label: string;
   href?: string;
+  label: string;
 }
 
 function getBreadcrumbs(pathname: string): BreadcrumbSegment[] {

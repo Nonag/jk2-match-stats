@@ -5,8 +5,8 @@ import { playerColumns } from "./player-columns";
 import type { PlayerWithAliases } from "@/lib/db/player";
 
 interface PlayerTableProps {
-  players: PlayerWithAliases[];
   loading?: boolean;
+  players: PlayerWithAliases[];
 }
 
 export function PlayerTable({ players, loading }: PlayerTableProps) {
