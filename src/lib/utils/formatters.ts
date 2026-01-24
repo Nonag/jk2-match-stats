@@ -1,3 +1,5 @@
+import { format, formatDistanceStrict, subDays } from "date-fns";
+
 /**
  * Format a duration in milliseconds to a compact string (e.g., "1h 2m 30s" or "45s")
  */
@@ -16,16 +18,26 @@ export function formatDuration(milliseconds: number): string {
 }
 
 /**
+ * Format a period in days to a human-readable relative label using date-fns
+ */
+export function formatPeriod(days: number, relative: "this" | "previous" = "this"): string {
+  const prefix = relative === "this" ? "this" : "previous";
+
+  // Use date-fns for human-readable period
+  const distance = formatDistanceStrict(subDays(new Date(), days), new Date(), { unit: days >= 365 ? "year" : days >= 28 ? "month" : "day" });
+
+  // Map to semantic labels
+  if (days === 7) return `${prefix} week`;
+  if (days === 30 || days === 31) return `${prefix} month`;
+  if (days === 365 || days === 366) return `${prefix} year`;
+
+  return `${relative === "this" ? "last" : "previous"} ${distance}`;
+}
+
+/**
  * Format a date to a human-readable string
  */
 export function formatDate(input: Date | string): string {
-  const date = new Date(input);
-  return date.toLocaleDateString("en-US", {
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    month: "long",
-    weekday: "long",
-    year: "numeric",
-  });
+  const date = typeof input === "string" ? new Date(input) : input;
+  return format(date, "EEEE, MMMM d, yyyy 'at' h:mm a");
 }

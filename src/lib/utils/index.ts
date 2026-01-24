@@ -1,5 +1,5 @@
 export { cn } from "./classnames";
-export { formatDate, formatDuration } from "./formatters";
+export { formatDate, formatDuration, formatPeriod } from "./formatters";
 export {
   parseCSV,
   parseFileName,
