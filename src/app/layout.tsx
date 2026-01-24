@@ -4,7 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { AppSidebar, SiteHeader } from "@/components/layout";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { ThemeProvider, TableSettingsProvider } from "@/providers";
+import { ThemeProvider, TableSettingsProvider, QueryProvider } from "@/providers";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -41,20 +41,22 @@ export default async function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <TableSettingsProvider>
-            <SidebarProvider defaultOpen={defaultOpen}>
-              <AppSidebar variant="inset" />
-              <SidebarInset>
-                <SiteHeader />
-                <div className="flex flex-1 flex-col">
-                  <div className="@container/main flex flex-1 flex-col gap-2">
-                    {children}
+          <QueryProvider>
+            <TableSettingsProvider>
+              <SidebarProvider defaultOpen={defaultOpen}>
+                <AppSidebar variant="inset" />
+                <SidebarInset>
+                  <SiteHeader />
+                  <div className="flex flex-1 flex-col">
+                    <div className="@container/main flex flex-1 flex-col gap-2">
+                      {children}
+                    </div>
                   </div>
-                </div>
-              </SidebarInset>
-            </SidebarProvider>
-            <Toaster />
-          </TableSettingsProvider>
+                </SidebarInset>
+              </SidebarProvider>
+              <Toaster />
+            </TableSettingsProvider>
+          </QueryProvider>
         </ThemeProvider>
       </body>
     </html>
