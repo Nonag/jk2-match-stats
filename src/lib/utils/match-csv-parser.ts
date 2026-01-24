@@ -1,5 +1,9 @@
 import Papa from "papaparse";
 
+/**
+ * Maps directly to CSV column headers from TG_INTERMISSION_SCORES files.
+ * Field order reflects the CSV file format for easier comparison and validation.
+ */
 export interface CSVPlayerRow {
   CL: string;
   "LAST-NONSPEC-TEAM": string;
@@ -16,36 +20,29 @@ export interface CSVPlayerRow {
   "BC-SUM": string;
   "ASSISTS-CURRENT": string;
   "ASSISTS-SUM": string;
-  // Newer format columns
   "FLAGHOLD-CURRENT"?: string;
   "FLAGHOLD-SUM"?: string;
   "FLAGGRABS-CURRENT"?: string;
   "FLAGGRABS-SUM"?: string;
-  // Older format columns
   "GAUNTLET-CURRENT"?: string;
   "GAUNTLET-SUM"?: string;
   "SPREEKILLS-CURRENT"?: string;
   "SPREEKILLS-SUM"?: string;
-  // Mine stats
   "MINEGRABS-TOTAL": string;
   "MINEGRABS-REDBASE": string;
   "MINEGRABS-BLUEBASE": string;
   "MINEGRABS-NEUTRAL": string;
-  // Combat stats
   "ACCURACY-WEIRD": string;
   KILLS: string;
   DEATHS: string;
   "TOTALKILLS-MOH": string;
-  // Connection stats
   "PING-CURRENT": string;
   "PING-MEAN": string;
   "PING-MEAN-DEVIATION": string;
   "TIME-CURRENT": string;
   "TIME-SUM": string;
-  // Rating stats
   "GLICKO2-RATING": string;
   "GLICKO2-DEVIATION": string;
-  // Kill/Return breakdown
   "DFA-KILLS": string;
   "DFA-RETURNS": string;
   "DFA-ATTEMPTS": string;
@@ -79,7 +76,6 @@ export interface CSVPlayerRow {
   "UNKN-RETURNS": string;
   "IDLE-KILLS": string;
   "IDLE-RETURNS": string;
-  // Blocking stats
   "BLOCKS-TEAM": string;
   "BLOCKS-TEAMCAPPER": string;
   "BLOCKS-ENEMY": string;
@@ -88,110 +84,89 @@ export interface CSVPlayerRow {
 
 export interface ParsedMatchData {
   date: Date;
+  fileName: string;
   mapName: string;
+  players: ParsedPlayer[];
   serverIp: string;
   serverName: string;
-  fileName: string;
-  players: ParsedPlayer[];
 }
 
 export interface ParsedPlayer {
-  // Basic info
-  clientNumber: number;
-  team: string;
-  lastNonSpecTeam: string;
-  nameClean: string;
-  nameRaw: string;
-
-  // Score stats
-  scoreCurrent: number;
-  scoreSum: number;
-
-  // CTF stats
-  capturesCurrent: number;
-  capturesSum: number;
-  returnsCurrent: number;
-  returnsSum: number;
-  bcCurrent: number;
-  bcSum: number;
+  accuracyWeird: number;
   assistsCurrent: number;
   assistsSum: number;
-
-  // Flag stats (newer format)
-  flagHoldCurrent: number;
-  flagHoldSum: number;
+  bcCurrent: number;
+  bcSum: number;
+  blocksEnemy: number;
+  blocksEnemyCapper: number;
+  blocksTeam: number;
+  blocksTeamCapper: number;
+  blubsAttempts: number;
+  blubsKills: number;
+  blubsReturns: number;
+  bluKills: number;
+  bluReturns: number;
+  bsAttempts: number;
+  bsKills: number;
+  bsReturns: number;
+  capturesCurrent: number;
+  capturesSum: number;
+  clientNumber: number;
+  dbsAttempts: number;
+  dbsKills: number;
+  dbsReturns: number;
+  deaths: number;
+  dfaAttempts: number;
+  dfaKills: number;
+  dfaReturns: number;
+  doomKills: number;
+  doomReturns: number;
   flagGrabsCurrent: number;
   flagGrabsSum: number;
-
-  // Legacy stats (older format)
+  flagHoldCurrent: number;
+  flagHoldSum: number;
   gauntletCurrent: number;
   gauntletSum: number;
-  spreeKillsCurrent: number;
-  spreeKillsSum: number;
-
-  // Mine stats
-  mineGrabsTotal: number;
-  mineGrabsRedBase: number;
+  glicko2Deviation: number;
+  glicko2Rating: number;
+  idleKills: number;
+  idleReturns: number;
+  kills: number;
+  lastNonSpecTeam: string;
   mineGrabsBlueBase: number;
   mineGrabsNeutral: number;
-
-  // Combat stats
-  accuracyWeird: number;
-  kills: number;
-  deaths: number;
-  totalKillsMoh: number;
-
-  // Connection stats
+  mineGrabsRedBase: number;
+  mineGrabsTotal: number;
+  mineKills: number;
+  mineReturns: number;
+  nameClean: string;
+  nameRaw: string;
   pingCurrent: number;
   pingMean: number;
   pingMeanDeviation: number;
-  timeCurrent: number;
-  timeSum: number;
-
-  // Rating stats
-  glicko2Rating: number;
-  glicko2Deviation: number;
-
-  // Kill/Return breakdown
-  dfaKills: number;
-  dfaReturns: number;
-  dfaAttempts: number;
   redKills: number;
   redReturns: number;
-  yelKills: number;
-  yelReturns: number;
-  bluKills: number;
-  bluReturns: number;
-  dbsKills: number;
-  dbsReturns: number;
-  dbsAttempts: number;
-  bsKills: number;
-  bsReturns: number;
-  bsAttempts: number;
-  mineKills: number;
-  mineReturns: number;
-  upcutKills: number;
-  upcutReturns: number;
-  ydfaKills: number;
-  ydfaReturns: number;
-  ydfaAttempts: number;
-  blubsKills: number;
-  blubsReturns: number;
-  blubsAttempts: number;
-  doomKills: number;
-  doomReturns: number;
+  returnsCurrent: number;
+  returnsSum: number;
+  scoreCurrent: number;
+  scoreSum: number;
+  spreeKillsCurrent: number;
+  spreeKillsSum: number;
+  team: string;
+  timeCurrent: number;
+  timeSum: number;
+  totalKillsMoh: number;
   turKills: number;
   turReturns: number;
   unknKills: number;
   unknReturns: number;
-  idleKills: number;
-  idleReturns: number;
-
-  // Blocking stats
-  blocksTeam: number;
-  blocksTeamCapper: number;
-  blocksEnemy: number;
-  blocksEnemyCapper: number;
+  upcutKills: number;
+  upcutReturns: number;
+  ydfaAttempts: number;
+  ydfaKills: number;
+  ydfaReturns: number;
+  yelKills: number;
+  yelReturns: number;
 }
 
 export function parseFileName(fileName: string): {

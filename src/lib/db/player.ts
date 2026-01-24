@@ -1,14 +1,16 @@
 import prisma from "./client";
 
-export interface PlayerWithAliases {
+export interface PlayerAlias {
   id: string;
-  primaryName: string;
-  aliases: {
-    id: string;
-    nameClean: string;
-    nameRaw: string;
-  }[];
+  nameClean: string;
+  nameRaw: string;
+}
+
+export interface PlayerWithAliases {
+  aliases: PlayerAlias[];
+  id: string;
   matchCount: number;
+  primaryName: string;
 }
 
 export async function getAllPlayers(): Promise<PlayerWithAliases[]> {

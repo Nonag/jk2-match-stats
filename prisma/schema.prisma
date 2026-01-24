@@ -9,144 +9,121 @@ datasource db {
   provider = "sqlite"
 }
 
-model Player {
-  id           String         @id @default(cuid())
-  primaryName  String
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
-  aliases      PlayerAlias[]
+model Match {
+  id           String        @id @default(cuid())
+  blueScore    Int
+  createdAt    DateTime      @default(now())
+  date         DateTime
+  duration     Int           // Match length in minutes
+  fileName      String        @unique
+  mapName      String
   matchPlayers MatchPlayer[]
+  redScore     Int
+  serverIp     String
+  serverName   String
+  updatedAt    DateTime      @updatedAt
+}
+
+model MatchPlayer {
+  id                String   @id @default(cuid())
+  accuracyWeird     Int
+  assistsCurrent    Int
+  assistsSum        Int
+  bcCurrent         Int      // Base clean current
+  bcSum             Int      // Base clean sum
+  blocksEnemy       Int
+  blocksEnemyCapper Int
+  blocksTeam        Int
+  blocksTeamCapper  Int
+  blubsAttempts     Int
+  blubsKills        Int
+  blubsReturns      Int
+  bluKills          Int
+  bluReturns        Int
+  bsAttempts        Int
+  bsKills           Int
+  bsReturns         Int
+  capturesCurrent   Int
+  capturesSum       Int
+  clientNumber      Int
+  createdAt         DateTime @default(now())
+  dbsAttempts       Int
+  dbsKills          Int
+  dbsReturns        Int
+  deaths            Int
+  dfaAttempts       Int
+  dfaKills          Int
+  dfaReturns        Int
+  doomKills         Int
+  doomReturns       Int
+  flagGrabsCurrent   Int
+  flagGrabsSum       Int
+  flagHoldCurrent    Int
+  flagHoldSum        Int
+  gauntletCurrent   Int      // Legacy stat
+  gauntletSum       Int      // Legacy stat
+  glicko2Deviation  Float
+  glicko2Rating     Float
+  idleKills         Int
+  idleReturns       Int
+  kills             Int
+  lastNonSpecTeam   String
+  match             Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  matchId           String
+  mineGrabsBlueBase Int
+  mineGrabsNeutral  Int
+  mineGrabsRedBase  Int
+  mineGrabsTotal    Int
+  mineKills         Int
+  mineReturns       Int
+  nameClean         String
+  nameRaw           String
+  pingCurrent       Int
+  pingMean          Int
+  pingMeanDeviation Int
+  player            Player?  @relation(fields: [playerId], references: [id], onDelete: SetNull)
+  playerId          String?
+  redKills          Int
+  redReturns        Int
+  returnsCurrent    Int
+  returnsSum        Int
+  scoreCurrent      Int
+  scoreSum          Int
+  spreeKillsCurrent Int      // Legacy stat
+  spreeKillsSum     Int      // Legacy stat
+  team              String
+  timeCurrent       Int
+  timeSum           Int
+  totalKillsMoh     Int
+  turKills          Int
+  turReturns        Int
+  unknKills         Int
+  unknReturns       Int
+  upcutKills        Int
+  upcutReturns      Int
+  ydfaAttempts      Int
+  ydfaKills         Int
+  ydfaReturns       Int
+  yelKills          Int
+  yelReturns        Int
+}
+
+model Player {
+  id           String        @id @default(cuid())
+  aliases      PlayerAlias[]
+  createdAt    DateTime      @default(now())
+  matchPlayers MatchPlayer[]
+  primaryName  String
+  updatedAt    DateTime      @updatedAt
 }
 
 model PlayerAlias {
   id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
   nameClean String
   nameRaw   String
-  playerId  String
   player    Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
+  playerId  String
 
   @@unique([nameClean, playerId])
-}
-
-model Match {
-  id            String        @id @default(cuid())
-  date          DateTime
-  mapName       String
-  serverIp      String
-  serverName    String
-  fileName      String        @unique
-  redScore      Int
-  blueScore     Int
-  duration      Int           // in minutes
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  matchPlayers  MatchPlayer[]
-}
-
-model MatchPlayer {
-  id              String   @id @default(cuid())
-  matchId         String
-  match           Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
-  playerId        String?
-  player          Player?  @relation(fields: [playerId], references: [id], onDelete: SetNull)
-
-  // Basic info
-  clientNumber    Int
-  team            String   // Red, Blue, Spectator
-  lastNonSpecTeam String   // LAST-NONSPEC-TEAM
-  nameClean       String
-  nameRaw         String
-
-  // Score stats
-  scoreCurrent    Int
-  scoreSum        Int
-
-  // CTF stats
-  capturesCurrent Int
-  capturesSum     Int
-  returnsCurrent  Int
-  returnsSum      Int
-  bcCurrent       Int      // Base clean kills current
-  bcSum           Int      // Base clean kills sum
-  assistsCurrent  Int
-  assistsSum      Int
-
-  // Flag stats (newer format - may be 0 in older files)
-  flagHoldCurrent Int
-  flagHoldSum     Int
-  flagGrabsCurrent Int
-  flagGrabsSum    Int
-
-  // Legacy stats (older format - may be 0 in newer files)
-  gauntletCurrent Int
-  gauntletSum     Int
-  spreeKillsCurrent Int
-  spreeKillsSum   Int
-
-  // Mine stats
-  mineGrabsTotal   Int
-  mineGrabsRedBase Int
-  mineGrabsBlueBase Int
-  mineGrabsNeutral Int
-
-  // Combat stats
-  accuracyWeird   Int
-  kills           Int
-  deaths          Int
-  totalKillsMoh   Int
-
-  // Connection stats
-  pingCurrent     Int
-  pingMean        Int
-  pingMeanDeviation Int
-  timeCurrent     Int
-  timeSum         Int
-
-  // Rating stats
-  glicko2Rating   Float
-  glicko2Deviation Float
-
-  // Kill/Return breakdown by type
-  dfaKills        Int
-  dfaReturns      Int
-  dfaAttempts     Int
-  redKills        Int
-  redReturns      Int
-  yelKills        Int
-  yelReturns      Int
-  bluKills        Int
-  bluReturns      Int
-  dbsKills        Int
-  dbsReturns      Int
-  dbsAttempts     Int
-  bsKills         Int
-  bsReturns       Int
-  bsAttempts      Int
-  mineKills       Int
-  mineReturns     Int
-  upcutKills      Int
-  upcutReturns    Int
-  ydfaKills       Int
-  ydfaReturns     Int
-  ydfaAttempts    Int
-  blubsKills      Int
-  blubsReturns    Int
-  blubsAttempts   Int
-  doomKills       Int
-  doomReturns     Int
-  turKills        Int
-  turReturns      Int
-  unknKills       Int
-  unknReturns     Int
-  idleKills       Int
-  idleReturns     Int
-
-  // Blocking stats
-  blocksTeam        Int
-  blocksTeamCapper  Int
-  blocksEnemy       Int
-  blocksEnemyCapper Int
-
-  createdAt       DateTime @default(now())
 }
