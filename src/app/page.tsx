@@ -1,28 +1,54 @@
 "use client";
 
+import { useMemo, useState } from "react";
+import { differenceInDays, subDays } from "date-fns";
+import { DateRange } from "react-day-picker";
+
 import { SectionCards } from "@/components/layout";
-import { MatchTable } from "@/components/match";
+import { DatePreset, MatchTable } from "@/components/match";
 import { useMatches, useDashboardStats } from "@/lib/queries";
 
 const defaultStat = { current: 0, previous: 0, trend: 0 };
 const defaultTotals = { matches: 0, players: 0, avgFlagHold: 0, avgDuration: 0 };
 
 export default function HomePage() {
+  const [datePreset, setDatePreset] = useState<DatePreset>("week");
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(() => {
+    const today = new Date();
+    return {
+      from: subDays(today, 7),
+      to: today,
+    };
+  });
+
+  // Calculate days from date range for stats API
+  const days = useMemo(() => {
+    if (!dateRange?.from || !dateRange?.to) return 7;
+    return differenceInDays(dateRange.to, dateRange.from) || 7;
+  }, [dateRange]);
+
   const { matches, loading } = useMatches();
-  const { stats } = useDashboardStats(7);
+  const { stats } = useDashboardStats(days);
 
   return (
     <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
       <SectionCards
-        matches={stats?.matches ?? defaultStat}
         activePlayers={stats?.activePlayers ?? defaultStat}
-        avgFlagHold={stats?.avgFlagHold ?? defaultStat}
         avgDuration={stats?.avgDuration ?? defaultStat}
+        avgFlagHold={stats?.avgFlagHold ?? defaultStat}
+        days={days}
+        matches={stats?.matches ?? defaultStat}
         totals={stats?.totals ?? defaultTotals}
-        days={7}
       />
       <div className="px-4 lg:px-6">
-        <MatchTable matches={matches} loading={loading} />
+        <MatchTable
+          datePreset={datePreset}
+          dateRange={dateRange}
+          loading={loading}
+          matches={matches}
+          onDatePresetChange={setDatePreset}
+          onDateRangeChange={setDateRange}
+        />
       </div>
     </div>
   );

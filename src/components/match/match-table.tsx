@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ColumnFiltersState,
@@ -12,10 +12,18 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { addDays, format, subDays, subMonths, subYears } from "date-fns";
+import { CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
+import { DateRange } from "react-day-picker";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { ButtonGroup } from "@/components/ui/button-group";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Table,
   TableBody,
@@ -24,21 +32,67 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { cn } from "@/lib/utils";
 import { matchColumns } from "./match-columns";
 import type { MatchSummary } from "@/lib/db/match";
 
+export type DatePreset = "week" | "month" | "year" | "custom";
+
 interface MatchTableProps {
+  datePreset: DatePreset;
+  dateRange: DateRange | undefined;
   loading?: boolean;
   matches: MatchSummary[];
+  onDatePresetChange: (preset: DatePreset) => void;
+  onDateRangeChange: (range: DateRange | undefined) => void;
 }
 
-export function MatchTable({ matches, loading }: MatchTableProps) {
+export function MatchTable({
+  datePreset,
+  dateRange,
+  loading,
+  matches,
+  onDatePresetChange,
+  onDateRangeChange,
+}: MatchTableProps) {
   const router = useRouter();
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
+  const handlePresetChange = (preset: DatePreset) => {
+    onDatePresetChange(preset);
+    const today = new Date();
+    switch (preset) {
+      case "week":
+        onDateRangeChange({ from: subDays(today, 7), to: today });
+        break;
+      case "month":
+        onDateRangeChange({ from: subMonths(today, 1), to: today });
+        break;
+      case "year":
+        onDateRangeChange({ from: subYears(today, 1), to: today });
+        break;
+    }
+  };
+
+  const handleDateRangeChange = (range: DateRange | undefined) => {
+    onDateRangeChange(range);
+    onDatePresetChange("custom");
+  };
+
+  const filteredMatches = useMemo(() => {
+    if (!dateRange?.from) return matches;
+
+    return matches.filter((match) => {
+      const matchDate = new Date(match.date);
+      const from = dateRange.from!;
+      const to = dateRange.to ?? addDays(from, 1);
+      return matchDate >= from && matchDate <= to;
+    });
+  }, [matches, dateRange]);
+
   const table = useReactTable({
-    data: matches,
+    data: filteredMatches,
     columns: matchColumns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -72,15 +126,72 @@ export function MatchTable({ matches, loading }: MatchTableProps) {
 
   return (
     <div className="w-full">
-      <div className="flex items-center py-4">
-        <Input
-          placeholder="Filter by map..."
-          value={(table.getColumn("mapName")?.getFilterValue() as string) ?? ""}
-          onChange={(event) =>
-            table.getColumn("mapName")?.setFilterValue(event.target.value)
-          }
-          className="max-w-sm"
-        />
+      <div className="flex flex-wrap items-center gap-2 py-4">
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              className={cn(
+                "justify-start text-left font-normal",
+                !dateRange && "text-muted-foreground"
+              )}
+              variant="outline"
+            >
+              <CalendarIcon />
+              {dateRange?.from ? (
+                dateRange.to ? (
+                  <>
+                    <span className="hidden sm:inline">
+                      {format(dateRange.from, "LLL dd, y")} - {format(dateRange.to, "LLL dd, y")}
+                    </span>
+                    <span className="sm:hidden">
+                      {format(dateRange.from, "MMM dd")} - {format(dateRange.to, "MMM dd")}
+                    </span>
+                  </>
+                ) : (
+                  format(dateRange.from, "LLL dd, y")
+                )
+              ) : (
+                <span>Pick a date range</span>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent align="start" className="w-auto p-0">
+            <Calendar
+              autoFocus
+              defaultMonth={dateRange?.from}
+              mode="range"
+              numberOfMonths={1}
+              onSelect={handleDateRangeChange}
+              selected={dateRange}
+            />
+          </PopoverContent>
+        </Popover>
+        <ButtonGroup className="ml-auto">
+          <Button
+            onClick={() => handlePresetChange("week")}
+            size="sm"
+            variant={datePreset === "week" ? "default" : "outline"}
+          >
+            <span className="hidden sm:inline">Week</span>
+            <span className="sm:hidden">W</span>
+          </Button>
+          <Button
+            onClick={() => handlePresetChange("month")}
+            size="sm"
+            variant={datePreset === "month" ? "default" : "outline"}
+          >
+            <span className="hidden sm:inline">Month</span>
+            <span className="sm:hidden">M</span>
+          </Button>
+          <Button
+            onClick={() => handlePresetChange("year")}
+            size="sm"
+            variant={datePreset === "year" ? "default" : "outline"}
+          >
+            <span className="hidden sm:inline">Year</span>
+            <span className="sm:hidden">Y</span>
+          </Button>
+        </ButtonGroup>
       </div>
       <div className="rounded-md border">
         <Table>
@@ -140,21 +251,21 @@ export function MatchTable({ matches, loading }: MatchTableProps) {
         </div>
         <div className="flex items-center space-x-2">
           <Button
-            variant="outline"
-            size="icon"
             className="size-8"
-            onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
+            onClick={() => table.previousPage()}
+            size="icon"
+            variant="outline"
           >
             <span className="sr-only">Go to previous page</span>
             <ChevronLeft />
           </Button>
           <Button
-            variant="outline"
-            size="icon"
             className="size-8"
-            onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
+            onClick={() => table.nextPage()}
+            size="icon"
+            variant="outline"
           >
             <span className="sr-only">Go to next page</span>
             <ChevronRight />
