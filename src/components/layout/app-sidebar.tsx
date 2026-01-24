@@ -3,6 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import {
+  Gamepad2,
   Swords,
   Users,
   Upload,
@@ -16,6 +17,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarRail,
 } from "@/components/ui/sidebar"
 
 const data = {
@@ -40,16 +42,19 @@ const data = {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
-    <Sidebar collapsible="offcanvas" {...props}>
+    <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
               asChild
-              className="data-[slot=sidebar-menu-button]:p-1.5!"
+              size="lg"
             >
               <Link href="/">
-                <span className="text-base font-semibold">JK2 Match Stats</span>
+                <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-7 items-center justify-center rounded-md">
+                  <Gamepad2 className="size-4" />
+                </div>
+                <span className="truncate font-semibold">JK2 Match Stats</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -58,6 +63,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarContent>
         <NavMain items={data.navMain} />
       </SidebarContent>
+      <SidebarRail />
     </Sidebar>
   )
 }
