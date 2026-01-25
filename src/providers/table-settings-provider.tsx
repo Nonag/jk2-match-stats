@@ -15,17 +15,22 @@ const STORAGE_KEY = "table-settings";
 interface TableSettings {
   lockTeamSort: boolean;
   matchPlayersColumns: VisibilityState;
+  pageSize: number;
 }
+
+const DEFAULT_PAGE_SIZE = 10;
 
 const defaultSettings: TableSettings = {
   lockTeamSort: true,
   matchPlayersColumns: defaultColumnVisibility,
+  pageSize: DEFAULT_PAGE_SIZE,
 };
 
 interface TableSettingsContextValue {
   resetMatchPlayersColumns: () => void;
   setLockTeamSort: (locked: boolean) => void;
   setMatchPlayersColumns: (updater: Updater<VisibilityState>) => void;
+  setPageSize: (size: number) => void;
   settings: TableSettings;
 }
 
@@ -92,12 +97,17 @@ export function TableSettingsProvider({ children }: { children: ReactNode }) {
     updateSettings({ ...currentSettings, lockTeamSort: locked });
   }, []);
 
+  const setPageSize = useCallback((size: number) => {
+    updateSettings({ ...currentSettings, pageSize: size });
+  }, []);
+
   return (
     <TableSettingsContext.Provider
       value={{
         resetMatchPlayersColumns,
         setLockTeamSort,
         setMatchPlayersColumns,
+        setPageSize,
         settings,
       }}
     >

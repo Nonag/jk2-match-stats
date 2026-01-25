@@ -137,12 +137,20 @@ const customColumns: Partial<Record<ColumnId, ColumnDef<PlayerListItem>>> = {
     accessorKey: ColumnId.nameClean,
     header: ({ column }) => <PlayerSortableHeader column={column} />,
     enableHiding: columnConfig[ColumnId.nameClean].canHide,
-    cell: ({ row }) => {
+    cell: ({ row, table }) => {
       const nameClean = row.getValue(ColumnId.nameClean) as string;
       const playerAlias = row.original.playerAlias;
       const isPlayer = row.original.type === "player";
+      const onNameClick = (table.options.meta as { onNameClick?: (item: PlayerListItem) => void })?.onNameClick;
       return (
-        <div className="flex flex-col">
+        <button
+          type="button"
+          className="flex flex-col text-left hover:underline"
+          onClick={(e) => {
+            e.stopPropagation();
+            onNameClick?.(row.original);
+          }}
+        >
           <div className="flex items-center gap-1">
             <span className="font-medium">{nameClean}</span>
             {isPlayer && (
@@ -154,7 +162,7 @@ const customColumns: Partial<Record<ColumnId, ColumnDef<PlayerListItem>>> = {
               aka {playerAlias}
             </span>
           )}
-        </div>
+        </button>
       );
     },
   },

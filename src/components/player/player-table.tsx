@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   ColumnFiltersState,
   SortingState,
@@ -139,15 +140,28 @@ function ColumnGroupSection({ depth = 0, group, table }: ColumnGroupSectionProps
   );
 }
 
-const PAGE_SIZE = 14;
+const PAGE_SIZE = 10;
 
 export function PlayerTable({ items, loading }: PlayerTableProps) {
+  const router = useRouter();
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [selectedItem, setSelectedItem] = useState<PlayerListItem | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const { settings, setMatchPlayersColumns } = useTableSettings();
   const columnVisibility = settings.matchPlayersColumns;
+
+  const handleNameClick = (item: PlayerListItem) => {
+    setSelectedItem(item);
+    setDialogOpen(true);
+  };
+
+  const handleRowClick = (item: PlayerListItem) => {
+    // Only navigate for matchplayers that have a matchId
+    if (item.type === "matchplayer" && item.matchId) {
+      router.push(`/matches/${item.matchId}`);
+    }
+  };
 
   const table = useReactTable({
     data: items,
@@ -170,12 +184,10 @@ export function PlayerTable({ items, loading }: PlayerTableProps) {
       columnFilters,
       columnVisibility,
     },
+    meta: {
+      onNameClick: handleNameClick,
+    },
   });
-
-  const handleRowClick = (item: PlayerListItem) => {
-    setSelectedItem(item);
-    setDialogOpen(true);
-  };
 
   const handleDialogClose = () => {
     setDialogOpen(false);
@@ -296,10 +308,11 @@ export function PlayerTable({ items, loading }: PlayerTableProps) {
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => {
                 const cellBg = "bg-background group-hover:bg-muted";
+                const isMatchPlayer = row.original.type === "matchplayer";
                 return (
                   <TableRow
                     key={row.id}
-                    className="cursor-pointer group"
+                    className={cn("group", isMatchPlayer && "cursor-pointer")}
                     onClick={() => handleRowClick(row.original)}
                   >
                     {row.getVisibleCells().map((cell) => {

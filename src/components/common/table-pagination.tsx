@@ -22,6 +22,9 @@ interface TablePaginationProps<TData> {
   pageSizeOptions?: number[];
   showRowCount?: boolean;
   rowCountLabel?: string;
+  page?: number;
+  onPageChange?: (page: number) => void;
+  onPageSizeChange?: (size: number) => void;
 }
 
 export function TablePagination<TData>({
@@ -29,7 +32,14 @@ export function TablePagination<TData>({
   pageSizeOptions = [10, 20, 30, 50],
   showRowCount = true,
   rowCountLabel = "row(s)",
+  page,
+  onPageChange,
+  onPageSizeChange,
 }: TablePaginationProps<TData>) {
+  const { pageIndex, pageSize } = table.getState().pagination;
+  const pageCount = table.getPageCount();
+  const currentPage = page ?? pageIndex + 1;
+
   return (
     <div className="flex items-center justify-between py-4">
       {showRowCount && (
@@ -41,30 +51,36 @@ export function TablePagination<TData>({
         <div className="flex items-center gap-2">
           <p className="text-sm font-medium">Rows per page</p>
           <Select
-            value={`${table.getState().pagination.pageSize}`}
-            onValueChange={(value) => table.setPageSize(Number(value))}
+            value={`${pageSize}`}
+            onValueChange={(value) => {
+              const size = Number(value);
+              if (onPageSizeChange) {
+                onPageSizeChange(size);
+              } else {
+                table.setPageSize(size);
+              }
+            }}
           >
             <SelectTrigger className="h-8 w-18">
-              <SelectValue placeholder={table.getState().pagination.pageSize} />
+              <SelectValue placeholder={pageSize} />
             </SelectTrigger>
             <SelectContent side="top">
-              {pageSizeOptions.map((pageSize) => (
-                <SelectItem key={pageSize} value={`${pageSize}`}>
-                  {pageSize}
+              {pageSizeOptions.map((size) => (
+                <SelectItem key={size} value={`${size}`}>
+                  {size}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
         <div className="flex w-25 items-center justify-center text-sm font-medium">
-          Page {table.getState().pagination.pageIndex + 1} of{" "}
-          {table.getPageCount()}
+          Page {currentPage} of {pageCount}
         </div>
         <div className="flex items-center gap-2">
           <Button
             className="hidden size-8 lg:flex"
-            disabled={!table.getCanPreviousPage()}
-            onClick={() => table.setPageIndex(0)}
+            disabled={currentPage <= 1}
+            onClick={() => onPageChange ? onPageChange(1) : table.setPageIndex(0)}
             size="icon"
             variant="outline"
           >
@@ -73,8 +89,8 @@ export function TablePagination<TData>({
           </Button>
           <Button
             className="size-8"
-            disabled={!table.getCanPreviousPage()}
-            onClick={() => table.previousPage()}
+            disabled={currentPage <= 1}
+            onClick={() => onPageChange ? onPageChange(currentPage - 1) : table.previousPage()}
             size="icon"
             variant="outline"
           >
@@ -83,8 +99,8 @@ export function TablePagination<TData>({
           </Button>
           <Button
             className="size-8"
-            disabled={!table.getCanNextPage()}
-            onClick={() => table.nextPage()}
+            disabled={currentPage >= pageCount}
+            onClick={() => onPageChange ? onPageChange(currentPage + 1) : table.nextPage()}
             size="icon"
             variant="outline"
           >
@@ -93,8 +109,8 @@ export function TablePagination<TData>({
           </Button>
           <Button
             className="hidden size-8 lg:flex"
-            disabled={!table.getCanNextPage()}
-            onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+            disabled={currentPage >= pageCount}
+            onClick={() => onPageChange ? onPageChange(pageCount) : table.setPageIndex(pageCount - 1)}
             size="icon"
             variant="outline"
           >

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { Geist, Geist_Mono } from "next/font/google";
+import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { Toaster } from "@/components/ui/sonner";
 import { AppSidebar, SiteHeader } from "@/components/layout";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
@@ -41,22 +42,24 @@ export default async function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <QueryProvider>
-            <TableSettingsProvider>
-              <SidebarProvider defaultOpen={defaultOpen}>
-                <AppSidebar variant="inset" />
-                <SidebarInset>
-                  <SiteHeader />
-                  <div className="flex flex-1 flex-col">
-                    <div className="@container/main flex flex-1 flex-col gap-2">
-                      {children}
+          <NuqsAdapter>
+            <QueryProvider>
+              <TableSettingsProvider>
+                <SidebarProvider defaultOpen={defaultOpen}>
+                  <AppSidebar variant="inset" />
+                  <SidebarInset>
+                    <SiteHeader />
+                    <div className="flex flex-1 flex-col">
+                      <div className="@container/main flex flex-1 flex-col gap-2">
+                        {children}
+                      </div>
                     </div>
-                  </div>
-                </SidebarInset>
-              </SidebarProvider>
-              <Toaster />
-            </TableSettingsProvider>
-          </QueryProvider>
+                  </SidebarInset>
+                </SidebarProvider>
+                <Toaster />
+              </TableSettingsProvider>
+            </QueryProvider>
+          </NuqsAdapter>
         </ThemeProvider>
       </body>
     </html>
