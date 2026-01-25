@@ -1,23 +1,23 @@
 import { NextResponse } from "next/server";
-import { assignMatchPlayersByNameClean } from "@/lib/db/player";
+import { assignMatchPlayerById } from "@/lib/db/player";
 
 export async function POST(request: Request) {
   try {
-    const { nameClean, playerId } = await request.json();
+    const { matchPlayerId, playerId } = await request.json();
 
-    if (!nameClean || !playerId) {
+    if (!matchPlayerId || !playerId) {
       return NextResponse.json(
-        { error: "nameClean and playerId are required" },
+        { error: "matchPlayerId and playerId are required" },
         { status: 400 }
       );
     }
 
-    await assignMatchPlayersByNameClean(nameClean, playerId);
+    await assignMatchPlayerById(matchPlayerId, playerId);
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Error assigning match players:", error);
+    console.error("Error assigning match player:", error);
     return NextResponse.json(
-      { error: "Failed to assign match players" },
+      { error: "Failed to assign match player" },
       { status: 500 }
     );
   }

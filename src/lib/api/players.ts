@@ -85,15 +85,15 @@ export async function unlinkPlayer(matchPlayerId: string): Promise<void> {
   }
 }
 
-export async function assignMatchPlayers(nameClean: string, playerId: string): Promise<void> {
+export async function assignMatchPlayer(matchPlayerId: string, playerId: string): Promise<void> {
   const response = await fetch("/api/players/assign", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ nameClean, playerId }),
+    body: JSON.stringify({ matchPlayerId, playerId }),
   });
   if (!response.ok) {
     const data = await response.json();
-    throw new Error(data.error || "Failed to assign match players");
+    throw new Error(data.error || "Failed to assign match player");
   }
 }
 

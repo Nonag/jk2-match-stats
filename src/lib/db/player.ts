@@ -302,27 +302,27 @@ export async function mergePlayers(
   });
 }
 
-// Assign multiple matchplayers to a player by nameClean
-export async function assignMatchPlayersByNameClean(
-  nameClean: string,
+// Assign a single matchPlayer to a player by matchPlayer ID
+export async function assignMatchPlayerById(
+  matchPlayerId: string,
   playerId: string
 ): Promise<void> {
-  // Get one matchPlayer to get the nameRaw
-  const sample = await prisma.matchPlayer.findFirst({
-    where: { nameClean, team: { not: "Spectator" } },
-    select: { nameRaw: true },
+  // Get the matchPlayer to get nameClean and nameRaw for alias
+  const matchPlayer = await prisma.matchPlayer.findUnique({
+    where: { id: matchPlayerId },
+    select: { nameClean: true, nameRaw: true },
   });
 
-  if (!sample) return;
+  if (!matchPlayer) return;
 
-  // Update all matchPlayers with this nameClean
-  await prisma.matchPlayer.updateMany({
-    where: { nameClean, team: { not: "Spectator" } },
+  // Update this single matchPlayer
+  await prisma.matchPlayer.update({
+    where: { id: matchPlayerId },
     data: { playerId },
   });
 
   // Add alias to player
-  await linkAliasToPlayer(playerId, nameClean, sample.nameRaw);
+  await linkAliasToPlayer(playerId, matchPlayer.nameClean, matchPlayer.nameRaw);
 }
 
 // Delete a player

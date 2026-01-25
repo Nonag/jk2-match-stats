@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  assignMatchPlayers,
+  assignMatchPlayer,
   createPlayer,
   deletePlayer,
   getPlayers,
@@ -182,12 +182,12 @@ export function useLinkPlayer() {
   };
 }
 
-export function useAssignMatchPlayers() {
+export function useAssignMatchPlayer() {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: ({ nameClean, playerId }: { nameClean: string; playerId: string }) =>
-      assignMatchPlayers(nameClean, playerId),
+    mutationFn: ({ matchPlayerId, playerId }: { matchPlayerId: string; playerId: string }) =>
+      assignMatchPlayer(matchPlayerId, playerId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: matchKeys.all });
       queryClient.invalidateQueries({ queryKey: playerKeys.all });
@@ -196,9 +196,9 @@ export function useAssignMatchPlayers() {
   });
 
   return {
-    assignMatchPlayers: async (nameClean: string, playerId: string) => {
+    assignMatchPlayer: async (matchPlayerId: string, playerId: string) => {
       try {
-        await mutation.mutateAsync({ nameClean, playerId });
+        await mutation.mutateAsync({ matchPlayerId, playerId });
         return true;
       } catch {
         return false;

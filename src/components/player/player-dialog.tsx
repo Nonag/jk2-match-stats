@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
-  useAssignMatchPlayers,
+  useAssignMatchPlayer,
   useCreatePlayer,
   usePlayersAndMatchPlayers,
 } from "@/lib/queries";
@@ -47,7 +47,7 @@ function PlayerDialogContent({ item, onClose }: { item: PlayerListItem; onClose:
 
   const { items: allItems } = usePlayersAndMatchPlayers();
   const { createPlayer, loading: createLoading } = useCreatePlayer();
-  const { assignMatchPlayers, loading: assignLoading } = useAssignMatchPlayers();
+  const { assignMatchPlayer, loading: assignLoading } = useAssignMatchPlayer();
 
   const isLoading = createLoading || assignLoading;
 
@@ -67,14 +67,16 @@ function PlayerDialogContent({ item, onClose }: { item: PlayerListItem; onClose:
     if (!item || !newName.trim()) return;
     const result = await createPlayer(newName.trim());
     if (result) {
-      await assignMatchPlayers(item.nameClean, result.id);
+      // Assign this specific matchPlayer to the new player
+      await assignMatchPlayer(item.id, result.id);
       onClose();
     }
   };
 
   const handleAssignToExisting = async () => {
     if (!item || !selectedPlayerId) return;
-    await assignMatchPlayers(item.nameClean, selectedPlayerId);
+    // Assign this specific matchPlayer to the selected player
+    await assignMatchPlayer(item.id, selectedPlayerId);
     onClose();
   };
 
