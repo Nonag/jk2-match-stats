@@ -320,7 +320,7 @@ export function MatchPlayersTable({
                       key={header.id}
                       className={cn(
                         "bg-accent group-hover:bg-muted border-b border-zinc-200 dark:border-zinc-800",
-                        isSticky && "sticky left-0",
+                        isSticky && "sticky left-0 z-10",
                       )}
                     >
                       {header.isPlaceholder

@@ -53,7 +53,6 @@ interface PlayerTableProps {
 // Extended column labels to include player-specific columns
 const playerColumnLabels: Record<string, string> = {
   ...columnLabels,
-  [PlayerColumnId.type]: "Status",
   [PlayerColumnId.matchCount]: "Matches",
   [PlayerColumnId.matchDate]: "Match Date",
 };
@@ -278,7 +277,7 @@ export function PlayerTable({ items, loading }: PlayerTableProps) {
                       key={header.id}
                       className={cn(
                         "bg-accent group-hover:bg-muted border-b border-zinc-200 dark:border-zinc-800",
-                        isSticky && "sticky left-0",
+                        isSticky && "sticky left-0 z-10",
                       )}
                     >
                       {header.isPlaceholder
@@ -295,31 +294,35 @@ export function PlayerTable({ items, loading }: PlayerTableProps) {
           </TableHeader>
           <TableBody>
             {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  className="cursor-pointer group"
-                  onClick={() => handleRowClick(row.original)}
-                >
-                  {row.getVisibleCells().map((cell) => {
-                    const isSticky = cell.column.id === "nameClean";
-                    return (
-                      <TableCell
-                        key={cell.id}
-                        className={cn(
-                          "border-b",
-                          isSticky && "sticky left-0 bg-background group-hover:bg-muted",
-                        )}
-                      >
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
-                      </TableCell>
-                    );
-                  })}
-                </TableRow>
-              ))
+              table.getRowModel().rows.map((row) => {
+                const cellBg = "bg-background group-hover:bg-muted";
+                return (
+                  <TableRow
+                    key={row.id}
+                    className="cursor-pointer group"
+                    onClick={() => handleRowClick(row.original)}
+                  >
+                    {row.getVisibleCells().map((cell) => {
+                      const isSticky = cell.column.id === "nameClean";
+                      return (
+                        <TableCell
+                          key={cell.id}
+                          className={cn(
+                            cellBg,
+                            isSticky && "sticky left-0",
+                            "border-b",
+                          )}
+                        >
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
+                          )}
+                        </TableCell>
+                      );
+                    })}
+                  </TableRow>
+                );
+              })
             ) : (
               <TableRow>
                 <TableCell

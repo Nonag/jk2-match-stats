@@ -1,8 +1,8 @@
 "use client";
 
 import { Column, ColumnDef } from "@tanstack/react-table";
+import { BadgeCheck } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
 import { SortableHeader } from "@/components/match/sortable-header";
 import { columnConfig, ColumnId } from "@/components/match/match-players-config";
 import { formatDate, formatDuration } from "@/lib/utils";
@@ -11,7 +11,6 @@ import type { PlayerListItem } from "@/lib/db/player";
 
 // Player-specific column IDs (not in match-players-config)
 export enum PlayerColumnId {
-  type = "type",
   matchCount = "matchCount",
   matchDate = "matchDate",
 }
@@ -71,32 +70,8 @@ function createNumericColumn(id: ColumnId): ColumnDef<PlayerListItem> {
   };
 }
 
-// Player-specific columns (type, matchCount, matchDate)
+// Player-specific columns (matchCount, matchDate)
 const playerSpecificColumns: ColumnDef<PlayerListItem>[] = [
-  {
-    accessorKey: PlayerColumnId.type,
-    header: "Status",
-    enableHiding: false,
-    enableSorting: false,
-    cell: ({ row }) => {
-      const isMatchPlayer = row.original.type === "matchplayer";
-      return isMatchPlayer ? (
-        <Badge
-          className="border-amber-200 bg-amber-100 text-amber-700 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-400"
-          variant="outline"
-        >
-          Unassigned
-        </Badge>
-      ) : (
-        <Badge
-          className="border-emerald-200 bg-emerald-100 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-400"
-          variant="outline"
-        >
-          Player
-        </Badge>
-      );
-    },
-  },
   {
     accessorKey: PlayerColumnId.matchCount,
     header: ({ column }) => (
@@ -168,7 +143,12 @@ const customColumns: Partial<Record<ColumnId, ColumnDef<PlayerListItem>>> = {
       const isPlayer = row.original.type === "player";
       return (
         <div className="flex flex-col">
-          <span className="font-medium">{nameClean}</span>
+          <div className="flex items-center gap-1">
+            <span className="font-medium">{nameClean}</span>
+            {isPlayer && (
+              <BadgeCheck className="h-4 w-4 text-blue-500 fill-blue-500/20" />
+            )}
+          </div>
           {!isPlayer && playerAlias && playerAlias !== nameClean && (
             <span className="text-xs text-muted-foreground">
               aka {playerAlias}
@@ -333,11 +313,11 @@ const matchPlayersBasedColumns: ColumnDef<PlayerListItem>[] = (
   Object.keys(columnConfig) as ColumnId[]
 ).map((id) => customColumns[id] ?? createNumericColumn(id));
 
-// Final column order: player-specific columns first, then all match-player columns
+// Final column order: nameClean first (sticky), then player-specific, then rest of match-player columns
 export const playerListColumns: ColumnDef<PlayerListItem>[] = [
-  playerSpecificColumns[0], // type/status
-  ...matchPlayersBasedColumns.slice(0, 2), // team, nameClean
-  playerSpecificColumns[1], // matchCount
-  playerSpecificColumns[2], // matchDate
+  matchPlayersBasedColumns[0], // team (hidden but needed for row coloring)
+  matchPlayersBasedColumns[1], // nameClean (sticky)
+  playerSpecificColumns[0], // matchCount
+  playerSpecificColumns[1], // matchDate
   ...matchPlayersBasedColumns.slice(2), // rest of match-player columns
 ];
