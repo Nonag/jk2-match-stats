@@ -187,7 +187,8 @@ const customColumns: Partial<Record<ColumnId, ColumnDef<PlayerListItem>>> = {
     header: ({ column }) => <PlayerSortableHeader column={column} />,
     enableHiding: columnConfig[ColumnId.kdr].canHide,
     cell: ({ row }) => {
-      const { deaths, kills } = row.original;
+      const kills = row.original.kills ?? 0;
+      const deaths = row.original.deaths ?? 0;
       const ratio = deaths > 0 ? (kills / deaths).toFixed(2) : kills.toFixed(2);
       const none = kills === 0 && deaths === 0;
       return (

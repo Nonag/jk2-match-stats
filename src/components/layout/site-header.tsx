@@ -1,5 +1,6 @@
 "use client";
 
+import { Fragment } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
@@ -59,16 +60,18 @@ export function SiteHeader() {
         <Breadcrumb>
           <BreadcrumbList>
             {breadcrumbs.map((segment, index) => (
-              <BreadcrumbItem key={index}>
+              <Fragment key={index}>
                 {index > 0 && <BreadcrumbSeparator />}
-                {segment.href ? (
-                  <BreadcrumbLink asChild>
-                    <Link href={segment.href}>{segment.label}</Link>
-                  </BreadcrumbLink>
-                ) : (
-                  <BreadcrumbPage>{segment.label}</BreadcrumbPage>
-                )}
-              </BreadcrumbItem>
+                <BreadcrumbItem>
+                  {segment.href ? (
+                    <BreadcrumbLink asChild>
+                      <Link href={segment.href}>{segment.label}</Link>
+                    </BreadcrumbLink>
+                  ) : (
+                    <BreadcrumbPage>{segment.label}</BreadcrumbPage>
+                  )}
+                </BreadcrumbItem>
+              </Fragment>
             ))}
           </BreadcrumbList>
         </Breadcrumb>
