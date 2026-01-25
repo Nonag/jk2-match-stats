@@ -2,15 +2,23 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  getPlayers,
+  assignMatchPlayers,
   createPlayer,
+  deletePlayer,
+  getPlayers,
+  getPlayersAndMatchPlayers,
+  getSuggestions,
   linkPlayer,
+  mergePlayers,
+  renamePlayer,
   unlinkPlayer,
 } from "@/lib/api/players";
 import { matchKeys } from "./matches";
 
 export const playerKeys = {
   all: ["players"] as const,
+  combined: ["players", "combined"] as const,
+  suggestions: ["players", "suggestions"] as const,
 };
 
 export function usePlayers() {
@@ -27,6 +35,33 @@ export function usePlayers() {
   };
 }
 
+export function usePlayersAndMatchPlayers() {
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: playerKeys.combined,
+    queryFn: getPlayersAndMatchPlayers,
+  });
+
+  return {
+    items: data ?? [],
+    loading: isLoading,
+    error: error as Error | null,
+    refetch,
+  };
+}
+
+export function useSuggestions() {
+  const { data, isLoading, error } = useQuery({
+    queryKey: playerKeys.suggestions,
+    queryFn: getSuggestions,
+  });
+
+  return {
+    suggestions: data ?? [],
+    loading: isLoading,
+    error: error as Error | null,
+  };
+}
+
 export function useCreatePlayer() {
   const queryClient = useQueryClient();
 
@@ -34,6 +69,7 @@ export function useCreatePlayer() {
     mutationFn: createPlayer,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: playerKeys.all });
+      queryClient.invalidateQueries({ queryKey: playerKeys.combined });
     },
   });
 
@@ -51,6 +87,57 @@ export function useCreatePlayer() {
   };
 }
 
+export function useRenamePlayer() {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: ({ id, primaryName }: { id: string; primaryName: string }) =>
+      renamePlayer(id, primaryName),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: playerKeys.all });
+      queryClient.invalidateQueries({ queryKey: playerKeys.combined });
+    },
+  });
+
+  return {
+    renamePlayer: async (id: string, primaryName: string) => {
+      try {
+        await mutation.mutateAsync({ id, primaryName });
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    loading: mutation.isPending,
+    error: mutation.error as Error | null,
+  };
+}
+
+export function useDeletePlayer() {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: deletePlayer,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: playerKeys.all });
+      queryClient.invalidateQueries({ queryKey: playerKeys.combined });
+    },
+  });
+
+  return {
+    deletePlayer: async (id: string) => {
+      try {
+        await mutation.mutateAsync(id);
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    loading: mutation.isPending,
+    error: mutation.error as Error | null,
+  };
+}
+
 export function useLinkPlayer() {
   const queryClient = useQueryClient();
 
@@ -60,6 +147,7 @@ export function useLinkPlayer() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: matchKeys.all });
       queryClient.invalidateQueries({ queryKey: playerKeys.all });
+      queryClient.invalidateQueries({ queryKey: playerKeys.combined });
     },
   });
 
@@ -68,6 +156,7 @@ export function useLinkPlayer() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: matchKeys.all });
       queryClient.invalidateQueries({ queryKey: playerKeys.all });
+      queryClient.invalidateQueries({ queryKey: playerKeys.combined });
     },
   });
 
@@ -90,5 +179,64 @@ export function useLinkPlayer() {
     },
     loading: linkMutation.isPending || unlinkMutation.isPending,
     error: (linkMutation.error || unlinkMutation.error) as Error | null,
+  };
+}
+
+export function useAssignMatchPlayers() {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: ({ nameClean, playerId }: { nameClean: string; playerId: string }) =>
+      assignMatchPlayers(nameClean, playerId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: matchKeys.all });
+      queryClient.invalidateQueries({ queryKey: playerKeys.all });
+      queryClient.invalidateQueries({ queryKey: playerKeys.combined });
+    },
+  });
+
+  return {
+    assignMatchPlayers: async (nameClean: string, playerId: string) => {
+      try {
+        await mutation.mutateAsync({ nameClean, playerId });
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    loading: mutation.isPending,
+    error: mutation.error as Error | null,
+  };
+}
+
+export function useMergePlayers() {
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: ({
+      targetPlayerId,
+      sourcePlayerIds,
+    }: {
+      targetPlayerId: string;
+      sourcePlayerIds: string[];
+    }) => mergePlayers(targetPlayerId, sourcePlayerIds),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: matchKeys.all });
+      queryClient.invalidateQueries({ queryKey: playerKeys.all });
+      queryClient.invalidateQueries({ queryKey: playerKeys.combined });
+    },
+  });
+
+  return {
+    mergePlayers: async (targetPlayerId: string, sourcePlayerIds: string[]) => {
+      try {
+        await mutation.mutateAsync({ targetPlayerId, sourcePlayerIds });
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    loading: mutation.isPending,
+    error: mutation.error as Error | null,
   };
 }

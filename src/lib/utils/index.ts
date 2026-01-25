@@ -8,3 +8,4 @@ export {
   type ParsedMatchData,
   type ParsedPlayer,
 } from "./match-csv-parser";
+export { stringSimilarity, sortBySimilarity } from "./string-similarity";

@@ -1,2 +1,3 @@
 export { PlayerTable } from "./player-table";
-export { playerColumns } from "./player-columns";
+export { PlayerDialog } from "./player-dialog";
+export { playerColumns, playerListColumns } from "./player-columns";
