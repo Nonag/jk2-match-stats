@@ -91,13 +91,13 @@ const customColumns: Partial<Record<ColumnId, ColumnDef<MatchPlayerDetail>>> = {
     enableHiding: columnConfig[ColumnId.nameClean].canHide,
     cell: ({ row }) => {
       const nameClean = row.getValue(ColumnId.nameClean) as string;
-      const playerPrimaryName = row.original.playerPrimaryName;
+      const playerAlias = row.original.playerAlias;
       return (
         <div className="flex flex-col">
           <span className="font-medium">{nameClean}</span>
-          {playerPrimaryName && playerPrimaryName !== nameClean && (
+          {playerAlias && playerAlias !== nameClean && (
             <span className="text-xs text-muted-foreground">
-              aka {playerPrimaryName}
+              aka {playerAlias}
             </span>
           )}
         </div>

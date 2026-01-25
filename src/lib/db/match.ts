@@ -1,6 +1,28 @@
 import prisma from "./client";
 import { ParsedMatchData, calculateMatchStats } from "@/lib/utils";
 
+// ============================================================================
+// Interfaces
+// ============================================================================
+
+export interface DateRange {
+  from: Date;
+  to: Date;
+}
+
+export interface DashboardStats {
+  activePlayers: StatWithTrend<number>;
+  avgDuration: StatWithTrend<number>;
+  avgFlagHold: StatWithTrend<number>;
+  matches: StatWithTrend<number>;
+  totals: {
+    avgDuration: number;
+    avgFlagHold: number;
+    matches: number;
+    players: number;
+  };
+}
+
 export interface MatchDetail {
   blueScore: number;
   date: Date;
@@ -14,7 +36,20 @@ export interface MatchDetail {
   serverName: string;
 }
 
-export interface MatchPlayerDetail {
+// Extends MatchStats with identity/metadata fields
+export interface MatchPlayerDetail extends MatchStats {
+  clientNumber: number;
+  id: string;
+  lastNonSpecTeam: string;
+  nameClean: string;
+  nameRaw: string;
+  playerAlias: string | null;
+  playerId: string | null;
+  team: string;
+}
+
+// Numeric match statistics - used for both individual MatchPlayer stats and aggregated Player.matchStats
+export interface MatchStats {
   accuracyWeird: number;
   assistsCurrent: number;
   assistsSum: number;
@@ -34,7 +69,6 @@ export interface MatchPlayerDetail {
   bsReturns: number;
   capturesCurrent: number;
   capturesSum: number;
-  clientNumber: number;
   dbsAttempts: number;
   dbsKills: number;
   dbsReturns: number;
@@ -52,24 +86,18 @@ export interface MatchPlayerDetail {
   gauntletSum: number;
   glicko2Deviation: number;
   glicko2Rating: number;
-  id: string;
   idleKills: number;
   idleReturns: number;
   kills: number;
-  lastNonSpecTeam: string;
   mineGrabsBlueBase: number;
   mineGrabsNeutral: number;
   mineGrabsRedBase: number;
   mineGrabsTotal: number;
   mineKills: number;
   mineReturns: number;
-  nameClean: string;
-  nameRaw: string;
   pingCurrent: number;
   pingMean: number;
   pingMeanDeviation: number;
-  playerId: string | null;
-  playerPrimaryName: string | null;
   redKills: number;
   redReturns: number;
   returnsCurrent: number;
@@ -78,7 +106,6 @@ export interface MatchPlayerDetail {
   scoreSum: number;
   spreeKillsCurrent: number;
   spreeKillsSum: number;
-  team: string;
   timeCurrent: number;
   timeSum: number;
   totalKillsMoh: number;
@@ -105,17 +132,154 @@ export interface MatchSummary {
   serverName: string;
 }
 
+export interface StatWithTrend<T> {
+  current: T;
+  previous: T;
+  trend: number;
+}
+
+// ============================================================================
+// Constants
+// ============================================================================
+
+// All keys of MatchStats for iteration
+export const matchStatsKeys: (keyof MatchStats)[] = [
+  "accuracyWeird",
+  "assistsCurrent",
+  "assistsSum",
+  "bcCurrent",
+  "bcSum",
+  "blocksEnemy",
+  "blocksEnemyCapper",
+  "blocksTeam",
+  "blocksTeamCapper",
+  "blubsAttempts",
+  "blubsKills",
+  "blubsReturns",
+  "bluKills",
+  "bluReturns",
+  "bsAttempts",
+  "bsKills",
+  "bsReturns",
+  "capturesCurrent",
+  "capturesSum",
+  "dbsAttempts",
+  "dbsKills",
+  "dbsReturns",
+  "deaths",
+  "dfaAttempts",
+  "dfaKills",
+  "dfaReturns",
+  "doomKills",
+  "doomReturns",
+  "flagGrabsCurrent",
+  "flagGrabsSum",
+  "flagHoldCurrent",
+  "flagHoldSum",
+  "gauntletCurrent",
+  "gauntletSum",
+  "glicko2Deviation",
+  "glicko2Rating",
+  "idleKills",
+  "idleReturns",
+  "kills",
+  "mineGrabsBlueBase",
+  "mineGrabsNeutral",
+  "mineGrabsRedBase",
+  "mineGrabsTotal",
+  "mineKills",
+  "mineReturns",
+  "pingCurrent",
+  "pingMean",
+  "pingMeanDeviation",
+  "redKills",
+  "redReturns",
+  "returnsCurrent",
+  "returnsSum",
+  "scoreCurrent",
+  "scoreSum",
+  "spreeKillsCurrent",
+  "spreeKillsSum",
+  "timeCurrent",
+  "timeSum",
+  "totalKillsMoh",
+  "turKills",
+  "turReturns",
+  "unknKills",
+  "unknReturns",
+  "upcutKills",
+  "upcutReturns",
+  "ydfaAttempts",
+  "ydfaKills",
+  "ydfaReturns",
+  "yelKills",
+  "yelReturns",
+];
+
+// ============================================================================
+// MatchStats Helper Functions
+// ============================================================================
+
+// Create empty stats object with all zeros
+export function createEmptyMatchStats(): MatchStats {
+  return Object.fromEntries(
+    matchStatsKeys.map((key) => [key, 0]),
+  ) as unknown as MatchStats;
+}
+
+// Extract MatchStats from a MatchPlayer-like object
+export function extractMatchStats<T extends Record<string, unknown>>(
+  obj: T,
+): MatchStats {
+  const result = createEmptyMatchStats();
+  for (const key of matchStatsKeys) {
+    if (key in obj && typeof obj[key] === "number") {
+      result[key] = obj[key] as number;
+    }
+  }
+  return result;
+}
+
+// Sum multiple MatchStats objects
+export function sumMatchStats(statsArray: MatchStats[]): MatchStats {
+  const result = createEmptyMatchStats();
+  for (const stats of statsArray) {
+    for (const key of matchStatsKeys) {
+      result[key] += stats[key] ?? 0;
+    }
+  }
+  return result;
+}
+
+// ============================================================================
+// Match CRUD Functions
+// ============================================================================
+
+export async function checkMatchExists(fileName: string): Promise<boolean> {
+  const match = await prisma.match.findUnique({
+    where: { fileName },
+    select: { id: true },
+  });
+  return match !== null;
+}
+
+export async function deleteMatch(id: string): Promise<void> {
+  await prisma.match.delete({
+    where: { id },
+  });
+}
+
 export async function getAllMatches(): Promise<MatchSummary[]> {
   const matches = await prisma.match.findMany({
     orderBy: { date: "desc" },
     select: {
-      id: true,
-      date: true,
-      mapName: true,
-      serverName: true,
-      redScore: true,
       blueScore: true,
+      date: true,
       duration: true,
+      id: true,
+      mapName: true,
+      redScore: true,
+      serverName: true,
     },
   });
 
@@ -130,14 +294,11 @@ export async function getMatchById(id: string): Promise<MatchDetail | null> {
         include: {
           player: {
             select: {
-              primaryName: true,
+              aliasPrimary: true,
             },
           },
         },
-        orderBy: [
-          { team: "asc" },
-          { scoreSum: "desc" },
-        ],
+        orderBy: [{ team: "asc" }, { scoreSum: "desc" }],
       },
     },
   });
@@ -145,221 +306,40 @@ export async function getMatchById(id: string): Promise<MatchDetail | null> {
   if (!match) return null;
 
   return {
-    id: match.id,
-    date: match.date,
-    mapName: match.mapName,
-    serverIp: match.serverIp,
-    serverName: match.serverName,
-    redScore: match.redScore,
     blueScore: match.blueScore,
+    date: match.date,
     duration: match.duration,
     fileName: match.fileName,
-    players: match.matchPlayers.map((matchPlayer) => ({
-      id: matchPlayer.id,
-      clientNumber: matchPlayer.clientNumber,
-      team: matchPlayer.team,
-      lastNonSpecTeam: matchPlayer.lastNonSpecTeam,
-      nameClean: matchPlayer.nameClean,
-      nameRaw: matchPlayer.nameRaw,
-
-      scoreCurrent: matchPlayer.scoreCurrent,
-      scoreSum: matchPlayer.scoreSum,
-
-      capturesCurrent: matchPlayer.capturesCurrent,
-      capturesSum: matchPlayer.capturesSum,
-      returnsCurrent: matchPlayer.returnsCurrent,
-      returnsSum: matchPlayer.returnsSum,
-      bcCurrent: matchPlayer.bcCurrent,
-      bcSum: matchPlayer.bcSum,
-      assistsCurrent: matchPlayer.assistsCurrent,
-      assistsSum: matchPlayer.assistsSum,
-
-      flagHoldCurrent: matchPlayer.flagHoldCurrent,
-      flagHoldSum: matchPlayer.flagHoldSum,
-      flagGrabsCurrent: matchPlayer.flagGrabsCurrent,
-      flagGrabsSum: matchPlayer.flagGrabsSum,
-
-      gauntletCurrent: matchPlayer.gauntletCurrent,
-      gauntletSum: matchPlayer.gauntletSum,
-      spreeKillsCurrent: matchPlayer.spreeKillsCurrent,
-      spreeKillsSum: matchPlayer.spreeKillsSum,
-
-      mineGrabsTotal: matchPlayer.mineGrabsTotal,
-      mineGrabsRedBase: matchPlayer.mineGrabsRedBase,
-      mineGrabsBlueBase: matchPlayer.mineGrabsBlueBase,
-      mineGrabsNeutral: matchPlayer.mineGrabsNeutral,
-
-      accuracyWeird: matchPlayer.accuracyWeird,
-      kills: matchPlayer.kills,
-      deaths: matchPlayer.deaths,
-      totalKillsMoh: matchPlayer.totalKillsMoh,
-
-      pingCurrent: matchPlayer.pingCurrent,
-      pingMean: matchPlayer.pingMean,
-      pingMeanDeviation: matchPlayer.pingMeanDeviation,
-      timeCurrent: matchPlayer.timeCurrent,
-      timeSum: matchPlayer.timeSum,
-
-      glicko2Rating: matchPlayer.glicko2Rating,
-      glicko2Deviation: matchPlayer.glicko2Deviation,
-
-      dfaKills: matchPlayer.dfaKills,
-      dfaReturns: matchPlayer.dfaReturns,
-      dfaAttempts: matchPlayer.dfaAttempts,
-      redKills: matchPlayer.redKills,
-      redReturns: matchPlayer.redReturns,
-      yelKills: matchPlayer.yelKills,
-      yelReturns: matchPlayer.yelReturns,
-      bluKills: matchPlayer.bluKills,
-      bluReturns: matchPlayer.bluReturns,
-      dbsKills: matchPlayer.dbsKills,
-      dbsReturns: matchPlayer.dbsReturns,
-      dbsAttempts: matchPlayer.dbsAttempts,
-      bsKills: matchPlayer.bsKills,
-      bsReturns: matchPlayer.bsReturns,
-      bsAttempts: matchPlayer.bsAttempts,
-      mineKills: matchPlayer.mineKills,
-      mineReturns: matchPlayer.mineReturns,
-      upcutKills: matchPlayer.upcutKills,
-      upcutReturns: matchPlayer.upcutReturns,
-      ydfaKills: matchPlayer.ydfaKills,
-      ydfaReturns: matchPlayer.ydfaReturns,
-      ydfaAttempts: matchPlayer.ydfaAttempts,
-      blubsKills: matchPlayer.blubsKills,
-      blubsReturns: matchPlayer.blubsReturns,
-      blubsAttempts: matchPlayer.blubsAttempts,
-      doomKills: matchPlayer.doomKills,
-      doomReturns: matchPlayer.doomReturns,
-      turKills: matchPlayer.turKills,
-      turReturns: matchPlayer.turReturns,
-      unknKills: matchPlayer.unknKills,
-      unknReturns: matchPlayer.unknReturns,
-      idleKills: matchPlayer.idleKills,
-      idleReturns: matchPlayer.idleReturns,
-
-      // Blocking stats
-      blocksTeam: matchPlayer.blocksTeam,
-      blocksTeamCapper: matchPlayer.blocksTeamCapper,
-      blocksEnemy: matchPlayer.blocksEnemy,
-      blocksEnemyCapper: matchPlayer.blocksEnemyCapper,
-
-      playerId: matchPlayer.playerId,
-      playerPrimaryName: matchPlayer.player?.primaryName ?? null,
-    })),
+    id: match.id,
+    mapName: match.mapName,
+    players: match.matchPlayers.map(
+      ({ player, matchId: _matchId, ...rest }) => ({
+        ...rest,
+        playerAlias: player?.aliasPrimary ?? null,
+      }),
+    ),
+    redScore: match.redScore,
+    serverIp: match.serverIp,
+    serverName: match.serverName,
   };
 }
 
-export async function checkMatchExists(fileName: string): Promise<boolean> {
-  const match = await prisma.match.findUnique({
-    where: { fileName },
-    select: { id: true },
-  });
-  return match !== null;
-}
-
-export async function importMatch(data: ParsedMatchData): Promise<{ id: string }> {
+export async function importMatch(
+  data: ParsedMatchData,
+): Promise<{ id: string }> {
   const { redScore, blueScore, duration } = calculateMatchStats(data.players);
 
   const match = await prisma.match.create({
     data: {
+      blueScore,
       date: data.date,
+      duration,
+      fileName: data.fileName,
       mapName: data.mapName,
+      matchPlayers: { create: data.players },
+      redScore,
       serverIp: data.serverIp,
       serverName: data.serverName,
-      fileName: data.fileName,
-      redScore,
-      blueScore,
-      duration,
-      matchPlayers: {
-        create: data.players.map((player) => ({
-          clientNumber: player.clientNumber,
-          team: player.team,
-          lastNonSpecTeam: player.lastNonSpecTeam,
-          nameClean: player.nameClean,
-          nameRaw: player.nameRaw,
-
-          scoreCurrent: player.scoreCurrent,
-          scoreSum: player.scoreSum,
-
-          capturesCurrent: player.capturesCurrent,
-          capturesSum: player.capturesSum,
-          returnsCurrent: player.returnsCurrent,
-          returnsSum: player.returnsSum,
-          bcCurrent: player.bcCurrent,
-          bcSum: player.bcSum,
-          assistsCurrent: player.assistsCurrent,
-          assistsSum: player.assistsSum,
-
-          flagHoldCurrent: player.flagHoldCurrent,
-          flagHoldSum: player.flagHoldSum,
-          flagGrabsCurrent: player.flagGrabsCurrent,
-          flagGrabsSum: player.flagGrabsSum,
-
-          gauntletCurrent: player.gauntletCurrent,
-          gauntletSum: player.gauntletSum,
-          spreeKillsCurrent: player.spreeKillsCurrent,
-          spreeKillsSum: player.spreeKillsSum,
-
-          mineGrabsTotal: player.mineGrabsTotal,
-          mineGrabsRedBase: player.mineGrabsRedBase,
-          mineGrabsBlueBase: player.mineGrabsBlueBase,
-          mineGrabsNeutral: player.mineGrabsNeutral,
-
-          accuracyWeird: player.accuracyWeird,
-          kills: player.kills,
-          deaths: player.deaths,
-          totalKillsMoh: player.totalKillsMoh,
-
-          pingCurrent: player.pingCurrent,
-          pingMean: player.pingMean,
-          pingMeanDeviation: player.pingMeanDeviation,
-          timeCurrent: player.timeCurrent,
-          timeSum: player.timeSum,
-
-          glicko2Rating: player.glicko2Rating,
-          glicko2Deviation: player.glicko2Deviation,
-
-          dfaKills: player.dfaKills,
-          dfaReturns: player.dfaReturns,
-          dfaAttempts: player.dfaAttempts,
-          redKills: player.redKills,
-          redReturns: player.redReturns,
-          yelKills: player.yelKills,
-          yelReturns: player.yelReturns,
-          bluKills: player.bluKills,
-          bluReturns: player.bluReturns,
-          dbsKills: player.dbsKills,
-          dbsReturns: player.dbsReturns,
-          dbsAttempts: player.dbsAttempts,
-          bsKills: player.bsKills,
-          bsReturns: player.bsReturns,
-          bsAttempts: player.bsAttempts,
-          mineKills: player.mineKills,
-          mineReturns: player.mineReturns,
-          upcutKills: player.upcutKills,
-          upcutReturns: player.upcutReturns,
-          ydfaKills: player.ydfaKills,
-          ydfaReturns: player.ydfaReturns,
-          ydfaAttempts: player.ydfaAttempts,
-          blubsKills: player.blubsKills,
-          blubsReturns: player.blubsReturns,
-          blubsAttempts: player.blubsAttempts,
-          doomKills: player.doomKills,
-          doomReturns: player.doomReturns,
-          turKills: player.turKills,
-          turReturns: player.turReturns,
-          unknKills: player.unknKills,
-          unknReturns: player.unknReturns,
-          idleKills: player.idleKills,
-          idleReturns: player.idleReturns,
-
-          // Blocking stats
-          blocksTeam: player.blocksTeam,
-          blocksTeamCapper: player.blocksTeamCapper,
-          blocksEnemy: player.blocksEnemy,
-          blocksEnemyCapper: player.blocksEnemyCapper,
-        })),
-      },
     },
     select: { id: true },
   });
@@ -367,34 +347,41 @@ export async function importMatch(data: ParsedMatchData): Promise<{ id: string }
   return match;
 }
 
-export async function deleteMatch(id: string): Promise<void> {
-  await prisma.match.delete({
-    where: { id },
-  });
-}
-
 // ============================================================================
-// Stats Queries - Each stat has dedicated query with optional date range
+// Stats Query Functions
 // ============================================================================
 
-export interface DateRange {
-  from: Date;
-  to: Date;
-}
-
-export interface StatWithTrend<T> {
-  current: T;
-  previous: T;
-  trend: number;
+/**
+ * Helper to calculate trend percentage
+ */
+function calculateTrend(current: number, previous: number): number {
+  if (previous === 0) return current > 0 ? 100 : 0;
+  return Math.round(((current - previous) / previous) * 100);
 }
 
 /**
- * Get match count for a date range
+ * Create date ranges for "last N days" vs "N days before that"
  */
-export async function getMatchCount(range?: DateRange): Promise<number> {
-  return prisma.match.count({
-    where: range ? { date: { gte: range.from, lt: range.to } } : undefined,
-  });
+export function createComparisonRanges(days: number): {
+  current: DateRange;
+  previous: DateRange;
+} {
+  const now = new Date();
+
+  // Current period: from (now - days) to now
+  const currentTo = new Date(now);
+  const currentFrom = new Date(now);
+  currentFrom.setDate(currentFrom.getDate() - days);
+
+  // Previous period: from (now - 2*days) to (now - days)
+  const previousTo = new Date(currentFrom);
+  const previousFrom = new Date(currentFrom);
+  previousFrom.setDate(previousFrom.getDate() - days);
+
+  return {
+    current: { from: currentFrom, to: currentTo },
+    previous: { from: previousFrom, to: previousTo },
+  };
 }
 
 /**
@@ -415,7 +402,9 @@ export async function getActivePlayerCount(range?: DateRange): Promise<number> {
 /**
  * Get average flag hold per grab (in milliseconds) for a date range
  */
-export async function getAvgFlagHoldPerGrab(range?: DateRange): Promise<number> {
+export async function getAvgFlagHoldPerGrab(
+  range?: DateRange,
+): Promise<number> {
   const flagStats = await prisma.matchPlayer.aggregate({
     where: range
       ? { match: { date: { gte: range.from, lt: range.to } } }
@@ -443,75 +432,23 @@ export async function getAvgMatchDuration(range?: DateRange): Promise<number> {
 }
 
 /**
- * Helper to calculate trend percentage
- */
-function calculateTrend(current: number, previous: number): number {
-  if (previous === 0) return current > 0 ? 100 : 0;
-  return Math.round(((current - previous) / previous) * 100);
-}
-
-/**
- * Get stat with comparison to previous period
- */
-export async function getStatWithTrend<T extends number>(
-  queryFn: (range?: DateRange) => Promise<T>,
-  currentRange: DateRange,
-  previousRange: DateRange
-): Promise<StatWithTrend<T>> {
-  const [current, previous] = await Promise.all([
-    queryFn(currentRange),
-    queryFn(previousRange),
-  ]);
-
-  return {
-    current,
-    previous,
-    trend: calculateTrend(current, previous),
-  };
-}
-
-/**
- * Create date ranges for "last N days" vs "N days before that"
- */
-export function createComparisonRanges(days: number): { current: DateRange; previous: DateRange } {
-  const now = new Date();
-
-  // Current period: from (now - days) to now
-  const currentTo = new Date(now);
-  const currentFrom = new Date(now);
-  currentFrom.setDate(currentFrom.getDate() - days);
-
-  // Previous period: from (now - 2*days) to (now - days)
-  const previousTo = new Date(currentFrom);
-  const previousFrom = new Date(currentFrom);
-  previousFrom.setDate(previousFrom.getDate() - days);
-
-  return {
-    current: { from: currentFrom, to: currentTo },
-    previous: { from: previousFrom, to: previousTo },
-  };
-}
-
-export interface DashboardStats {
-  activePlayers: StatWithTrend<number>;
-  avgDuration: StatWithTrend<number>;
-  avgFlagHold: StatWithTrend<number>;
-  matches: StatWithTrend<number>;
-  totals: {
-    avgDuration: number;
-    avgFlagHold: number;
-    matches: number;
-    players: number;
-  };
-}
-
-/**
  * Get all dashboard stats with totals and 7-day trends
  */
-export async function getDashboardStats(days: number = 7): Promise<DashboardStats> {
+export async function getDashboardStats(
+  days: number = 7,
+): Promise<DashboardStats> {
   const { current, previous } = createComparisonRanges(days);
 
-  const [matches, activePlayers, avgFlagHold, avgDuration, totalMatches, totalPlayers, totalAvgFlagHold, totalAvgDuration] = await Promise.all([
+  const [
+    matches,
+    activePlayers,
+    avgFlagHold,
+    avgDuration,
+    totalMatches,
+    totalPlayers,
+    totalAvgFlagHold,
+    totalAvgDuration,
+  ] = await Promise.all([
     getStatWithTrend(getMatchCount, current, previous),
     getStatWithTrend(getActivePlayerCount, current, previous),
     getStatWithTrend(getAvgFlagHoldPerGrab, current, previous),
@@ -533,5 +470,34 @@ export async function getDashboardStats(days: number = 7): Promise<DashboardStat
       matches: totalMatches,
       players: totalPlayers,
     },
+  };
+}
+
+/**
+ * Get match count for a date range
+ */
+export async function getMatchCount(range?: DateRange): Promise<number> {
+  return prisma.match.count({
+    where: range ? { date: { gte: range.from, lt: range.to } } : undefined,
+  });
+}
+
+/**
+ * Get stat with comparison to previous period
+ */
+export async function getStatWithTrend<T extends number>(
+  queryFn: (range?: DateRange) => Promise<T>,
+  currentRange: DateRange,
+  previousRange: DateRange,
+): Promise<StatWithTrend<T>> {
+  const [current, previous] = await Promise.all([
+    queryFn(currentRange),
+    queryFn(previousRange),
+  ]);
+
+  return {
+    current,
+    previous,
+    trend: calculateTrend(current, previous),
   };
 }

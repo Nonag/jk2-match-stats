@@ -1,6 +1,6 @@
-import type { PlayerListItem, PlayerWithAliases } from "@/lib/db/player";
+import type { PlayerListItem, PlayerDetail } from "@/lib/db/player";
 
-export async function getPlayers(): Promise<PlayerWithAliases[]> {
+export async function getPlayers(): Promise<PlayerDetail[]> {
   const response = await fetch("/api/players");
   if (!response.ok) throw new Error("Failed to fetch players");
   return response.json();
@@ -11,9 +11,10 @@ export async function getPlayersAndMatchPlayers(): Promise<PlayerListItem[]> {
   if (!response.ok) throw new Error("Failed to fetch players");
   const data = await response.json();
   // Convert date strings back to Date objects
-  return data.map((item: PlayerListItem & { lastMatchDate: string | null }) => ({
+  return data.map((item: PlayerListItem & { matchDate: string | null; matchDateLatest: string | null }) => ({
     ...item,
-    lastMatchDate: item.lastMatchDate ? new Date(item.lastMatchDate) : null,
+    matchDate: item.matchDate ? new Date(item.matchDate) : null,
+    matchDateLatest: item.matchDateLatest ? new Date(item.matchDateLatest) : null,
   }));
 }
 
@@ -25,22 +26,22 @@ export async function getSuggestions(): Promise<
   return response.json();
 }
 
-export async function createPlayer(primaryName: string): Promise<{ id: string }> {
+export async function createPlayer(aliasPrimary: string): Promise<{ id: string }> {
   const response = await fetch("/api/players", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ primaryName }),
+    body: JSON.stringify({ aliasPrimary }),
   });
   const data = await response.json();
   if (!response.ok) throw new Error(data.error || "Failed to create player");
   return data;
 }
 
-export async function renamePlayer(id: string, primaryName: string): Promise<void> {
+export async function renamePlayer(id: string, aliasPrimary: string): Promise<void> {
   const response = await fetch("/api/players", {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ id, primaryName }),
+    body: JSON.stringify({ id, aliasPrimary }),
   });
   if (!response.ok) {
     const data = await response.json();

@@ -47,7 +47,7 @@ export function PlayerDialog({ item, onClose, open }: PlayerDialogProps) {
 
 function PlayerDialogContent({ item, onClose }: { item: PlayerListItem; onClose: () => void }) {
   const [mode, setMode] = useState<DialogMode>("view");
-  const [newName, setNewName] = useState(item.primaryName);
+  const [newName, setNewName] = useState(item.aliasPrimary);
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const [selectedMergeIds, setSelectedMergeIds] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -65,7 +65,7 @@ function PlayerDialogContent({ item, onClose }: { item: PlayerListItem; onClose:
   const sortedPlayers = useMemo(() => {
     if (!item) return [];
     const players = allItems.filter((i) => i.type === "player" && i.id !== item.id);
-    return sortBySimilarity(players, item.nameClean, (p) => p.primaryName);
+    return sortBySimilarity(players, item.nameClean, (p) => p.aliasPrimary);
   }, [allItems, item]);
 
   // Get all items (players + matchplayers) sorted by similarity for merge
@@ -74,11 +74,11 @@ function PlayerDialogContent({ item, onClose }: { item: PlayerListItem; onClose:
     const others = allItems.filter((i) => i.id !== item.id);
     const filtered = searchQuery
       ? others.filter((i) =>
-          i.primaryName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          i.aliasPrimary.toLowerCase().includes(searchQuery.toLowerCase()) ||
           i.nameClean.toLowerCase().includes(searchQuery.toLowerCase())
         )
       : others;
-    return sortBySimilarity(filtered, item.nameClean, (i) => i.primaryName);
+    return sortBySimilarity(filtered, item.nameClean, (i) => i.aliasPrimary);
   }, [allItems, item, searchQuery]);
 
   const handleCreateAndAssign = async () => {
@@ -135,7 +135,7 @@ function PlayerDialogContent({ item, onClose }: { item: PlayerListItem; onClose:
               Player
             </Badge>
           )}
-          {item.primaryName}
+          {item.aliasPrimary}
         </DialogTitle>
         <DialogDescription>
           {isMatchPlayer
@@ -267,7 +267,7 @@ function PlayerDialogContent({ item, onClose }: { item: PlayerListItem; onClose:
                       }`}
                     >
                       <div>
-                        <div className="font-medium">{player.primaryName}</div>
+                        <div className="font-medium">{player.aliasPrimary}</div>
                         <div className="text-sm text-muted-foreground">
                           {player.matchCount} matches
                         </div>
@@ -314,7 +314,7 @@ function PlayerDialogContent({ item, onClose }: { item: PlayerListItem; onClose:
             </Button>
             <Button
               onClick={handleRename}
-              disabled={!newName.trim() || newName === item.primaryName || isLoading}
+              disabled={!newName.trim() || newName === item.aliasPrimary || isLoading}
             >
               Rename
             </Button>
@@ -326,7 +326,7 @@ function PlayerDialogContent({ item, onClose }: { item: PlayerListItem; onClose:
         <>
           <div className="space-y-4 py-4">
             <p className="text-sm text-muted-foreground">
-              Select players or unassigned names to merge into &quot;{item.primaryName}&quot;.
+              Select players or unassigned names to merge into &quot;{item.aliasPrimary}&quot;.
               All their match records will be transferred.
             </p>
             <Input
@@ -355,7 +355,7 @@ function PlayerDialogContent({ item, onClose }: { item: PlayerListItem; onClose:
                         </Badge>
                       )}
                       <div>
-                        <div className="font-medium">{other.primaryName}</div>
+                        <div className="font-medium">{other.aliasPrimary}</div>
                         <div className="text-sm text-muted-foreground">
                           {other.matchCount} matches
                         </div>

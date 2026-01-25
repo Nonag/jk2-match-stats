@@ -1,5 +1,5 @@
 import prisma from "./client";
-import type { MatchPlayerDetail } from "./match";
+import type { MatchPlayerDetail, MatchStats } from "./match";
 
 export interface PlayerAlias {
   id: string;
@@ -7,21 +7,18 @@ export interface PlayerAlias {
   nameRaw: string;
 }
 
-export interface PlayerWithAliases {
+export interface PlayerDetail {
+  aliasPrimary: string;
   aliases: PlayerAlias[];
   id: string;
   matchCount: number;
-  primaryName: string;
+  matchDateLatest: Date | null;
+  matchStats: MatchStats;
 }
 
-export async function getAllPlayers(): Promise<PlayerWithAliases[]> {
+export async function getAllPlayers(): Promise<PlayerDetail[]> {
   const players = await prisma.player.findMany({
     include: {
-      _count: {
-        select: {
-          matchPlayers: true,
-        },
-      },
       aliases: {
         select: {
           id: true,
@@ -30,18 +27,20 @@ export async function getAllPlayers(): Promise<PlayerWithAliases[]> {
         },
       },
     },
-    orderBy: { primaryName: "asc" },
+    orderBy: { aliasPrimary: "asc" },
   });
 
   return players.map((player) => ({
+    aliasPrimary: player.aliasPrimary,
     aliases: player.aliases,
     id: player.id,
-    matchCount: player._count.matchPlayers,
-    primaryName: player.primaryName,
+    matchCount: player.matchCount,
+    matchDateLatest: player.matchDateLatest,
+    matchStats: player.matchStats as unknown as MatchStats,
   }));
 }
 
-export async function getPlayerById(id: string): Promise<PlayerWithAliases | null> {
+export async function getPlayerById(id: string): Promise<PlayerDetail | null> {
   const player = await prisma.player.findUnique({
     where: { id },
     include: {
@@ -52,39 +51,36 @@ export async function getPlayerById(id: string): Promise<PlayerWithAliases | nul
           nameRaw: true,
         },
       },
-      _count: {
-        select: {
-          matchPlayers: true,
-        },
-      },
     },
   });
 
   if (!player) return null;
 
   return {
+    aliasPrimary: player.aliasPrimary,
     aliases: player.aliases,
     id: player.id,
-    matchCount: player._count.matchPlayers,
-    primaryName: player.primaryName,
+    matchCount: player.matchCount,
+    matchDateLatest: player.matchDateLatest,
+    matchStats: player.matchStats as unknown as MatchStats,
   };
 }
 
-export async function createPlayer(primaryName: string): Promise<{ id: string }> {
+export async function createPlayer(aliasPrimary: string): Promise<{ id: string }> {
   const player = await prisma.player.create({
-    data: { primaryName },
+    data: { aliasPrimary },
     select: { id: true },
   });
   return player;
 }
 
-export async function updatePlayerPrimaryName(
+export async function updatePlayerAlias(
   id: string,
-  primaryName: string
+  aliasPrimary: string
 ): Promise<void> {
   await prisma.player.update({
     where: { id },
-    data: { primaryName },
+    data: { aliasPrimary },
   });
 }
 
@@ -163,62 +159,46 @@ export async function getUnlinkedMatchPlayers(): Promise<
 // Combined view of players and unassigned matchplayers for the player management table
 // Extends MatchPlayerDetail with extra metadata fields
 export interface PlayerListItem extends MatchPlayerDetail {
+  aliasPrimary: string;
   aliases: { id: string; nameClean: string; nameRaw: string }[];
-  lastMatchDate: Date | null;
   matchCount: number;
+  matchDate: Date | null; // For matchPlayers: the match date; for players: null (use matchDateLatest)
+  matchDateLatest: Date | null;
   matchId: string | null;
-  primaryName: string;
   type: "matchplayer" | "player";
 }
 
-// Helper to accumulate numeric stats from matchplayers
-function accumulateStats<T extends Record<string, unknown>>(matchPlayers: T[]): Record<string, number> {
-  if (matchPlayers.length === 0) return {};
-  const result: Record<string, number> = {};
-  for (const key of Object.keys(matchPlayers[0])) {
-    if (typeof matchPlayers[0][key] === "number") {
-      result[key] = matchPlayers.reduce((sum, mp) => sum + (Number(mp[key]) || 0), 0);
-    }
-  }
-  return result;
-}
+// Re-export MatchStats for convenience
+export type { MatchStats } from "./match";
 
 export async function getPlayersAndUnassignedMatchPlayers(): Promise<PlayerListItem[]> {
-  // Get all players with their matchplayers (full stats)
+  // Get all players with stored stats (no need to load all matchPlayers)
   const players = await prisma.player.findMany({
     include: {
       aliases: {
         select: { id: true, nameClean: true, nameRaw: true },
       },
-      matchPlayers: {
-        where: { team: { in: ["Red", "Blue"] } },
-        include: { match: { select: { date: true } } },
-      },
     },
   });
 
   const playerItems: PlayerListItem[] = players.map((player) => {
-    const stats = accumulateStats(player.matchPlayers);
-    const lastMatchDate = player.matchPlayers.length > 0
-      ? player.matchPlayers.reduce((latest, mp) =>
-          mp.match.date > latest ? mp.match.date : latest,
-          player.matchPlayers[0].match.date
-        )
-      : null;
+    const stats = player.matchStats as unknown as MatchStats;
 
     return {
       ...stats,
+      aliasPrimary: player.aliasPrimary,
       aliases: player.aliases,
+      clientNumber: 0,
       id: player.id,
-      lastMatchDate,
       lastNonSpecTeam: "",
-      matchCount: player.matchPlayers.length,
+      matchCount: player.matchCount,
+      matchDate: null, // Players don't have a single match date
+      matchDateLatest: player.matchDateLatest,
       matchId: null,
-      nameClean: player.primaryName,
-      nameRaw: player.primaryName,
+      nameClean: player.aliasPrimary,
+      nameRaw: player.aliasPrimary,
+      playerAlias: player.aliasPrimary,
       playerId: player.id,
-      playerPrimaryName: player.primaryName,
-      primaryName: player.primaryName,
       team: "",
       type: "player" as const,
     } as PlayerListItem;
@@ -233,22 +213,23 @@ export async function getPlayersAndUnassignedMatchPlayers(): Promise<PlayerListI
 
   const unassignedItems: PlayerListItem[] = unassignedMatchPlayers.map((mp) => ({
     ...mp,
+    aliasPrimary: mp.nameClean,
     aliases: [],
-    lastMatchDate: mp.match.date,
     matchCount: 1,
+    matchDate: mp.match.date, // The specific match date for this matchPlayer
+    matchDateLatest: mp.match.date,
     matchId: mp.matchId,
-    playerPrimaryName: null,
-    primaryName: mp.nameClean,
+    playerAlias: null,
     type: "matchplayer" as const,
   }));
 
   // Combine and sort by most recent match
   const allItems = [...playerItems, ...unassignedItems];
   allItems.sort((a, b) => {
-    if (!a.lastMatchDate && !b.lastMatchDate) return 0;
-    if (!a.lastMatchDate) return 1;
-    if (!b.lastMatchDate) return -1;
-    return b.lastMatchDate.getTime() - a.lastMatchDate.getTime();
+    if (!a.matchDateLatest && !b.matchDateLatest) return 0;
+    if (!a.matchDateLatest) return 1;
+    if (!b.matchDateLatest) return -1;
+    return b.matchDateLatest.getTime() - a.matchDateLatest.getTime();
   });
 
   return allItems;
@@ -256,7 +237,7 @@ export async function getPlayersAndUnassignedMatchPlayers(): Promise<PlayerListI
 
 // Get all matchplayers for similarity-based suggestions in the dialog
 export async function getAllMatchPlayersForSuggestions(): Promise<
-  { nameClean: string; nameRaw: string; playerId: string | null; playerName: string | null }[]
+  { nameClean: string; nameRaw: string; playerId: string | null; playerAlias: string | null }[]
 > {
   const matchPlayers = await prisma.matchPlayer.findMany({
     where: { team: { in: ["Red", "Blue"] } },
@@ -264,7 +245,7 @@ export async function getAllMatchPlayersForSuggestions(): Promise<
       nameClean: true,
       nameRaw: true,
       playerId: true,
-      player: { select: { primaryName: true } },
+      player: { select: { aliasPrimary: true } },
     },
     distinct: ["nameClean"],
   });
@@ -273,7 +254,7 @@ export async function getAllMatchPlayersForSuggestions(): Promise<
     nameClean: mp.nameClean,
     nameRaw: mp.nameRaw,
     playerId: mp.playerId,
-    playerName: mp.player?.primaryName ?? null,
+    playerAlias: mp.player?.aliasPrimary ?? null,
   }));
 }
 

@@ -11,9 +11,19 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
+import { Settings2 } from "lucide-react";
 
-import { TablePagination } from "@/components/common/table-pagination";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import {
   Table,
   TableBody,
@@ -22,7 +32,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { playerListColumns } from "./player-columns";
+import { TablePagination } from "@/components/common/table-pagination";
+import { cn } from "@/lib/utils";
+import {
+  columnGroups,
+  columnLabels,
+  type ColumnGroupItem,
+  type ColumnId,
+} from "@/components/match/match-players-config";
+import { useTableSettings } from "@/providers";
+import { playerListColumns, PlayerColumnId } from "./player-columns";
 import { PlayerDialog } from "./player-dialog";
 import type { PlayerListItem } from "@/lib/db/player";
 
@@ -31,24 +50,126 @@ interface PlayerTableProps {
   loading?: boolean;
 }
 
+// Extended column labels to include player-specific columns
+const playerColumnLabels: Record<string, string> = {
+  ...columnLabels,
+  [PlayerColumnId.type]: "Status",
+  [PlayerColumnId.matchCount]: "Matches",
+  [PlayerColumnId.matchDate]: "Match Date",
+};
+
+interface ColumnGroupSectionProps {
+  depth?: number;
+  group: ColumnGroupItem;
+  table: ReturnType<typeof useReactTable<PlayerListItem>>;
+}
+
+function ColumnGroupSection({ depth = 0, group, table }: ColumnGroupSectionProps) {
+  // Get all columns for this group (including from subgroups for parent toggle)
+  const getAllColumns = (grp: ColumnGroupItem): ColumnId[] => {
+    const cols = [...grp.columns];
+    if (grp.subgroups) {
+      grp.subgroups.forEach((subgroup) => cols.push(...getAllColumns(subgroup)));
+    }
+    return cols;
+  };
+
+  const allColumnIds = getAllColumns(group);
+  const groupColumns = allColumnIds
+    .map((colId) => table.getColumn(colId))
+    .filter((col) => col && col.getCanHide());
+
+  if (groupColumns.length === 0 && !group.subgroups?.length) return null;
+
+  const visibleCount = groupColumns.filter((col) => col?.getIsVisible()).length;
+  const allVisible = visibleCount === groupColumns.length && groupColumns.length > 0;
+  const someVisible = visibleCount > 0 && visibleCount < groupColumns.length;
+
+  const toggleGroup = (checked: boolean) => {
+    groupColumns.forEach((col) => col?.toggleVisibility(checked));
+  };
+
+  const directColumns = group.columns
+    .map((colId) => table.getColumn(colId))
+    .filter((col) => col && col.getCanHide());
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center gap-2" style={{ marginLeft: depth * 16 }}>
+        <Checkbox
+          id={`group-${group.label}`}
+          checked={allVisible}
+          data-state={someVisible ? "indeterminate" : undefined}
+          onCheckedChange={(value) => toggleGroup(!!value)}
+        />
+        <Label
+          htmlFor={`group-${group.label}`}
+          className="text-sm font-medium text-muted-foreground cursor-pointer"
+        >
+          {group.label}
+        </Label>
+      </div>
+      {directColumns.length > 0 && (
+        <div className="flex flex-col gap-2" style={{ marginLeft: (depth + 1) * 16 + 8 }}>
+          {directColumns.map((column) => {
+            if (!column) return null;
+            return (
+              <div key={column.id} className="flex items-center gap-2">
+                <Checkbox
+                  id={column.id}
+                  checked={column.getIsVisible()}
+                  onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                />
+                <Label htmlFor={column.id} className="text-sm cursor-pointer">
+                  {playerColumnLabels[column.id] || column.id}
+                </Label>
+              </div>
+            );
+          })}
+        </div>
+      )}
+      {group.subgroups?.map((subgroup) => (
+        <ColumnGroupSection
+          key={subgroup.label}
+          group={subgroup}
+          table={table}
+          depth={depth + 1}
+        />
+      ))}
+    </div>
+  );
+}
+
+const PAGE_SIZE = 14;
+
 export function PlayerTable({ items, loading }: PlayerTableProps) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [selectedItem, setSelectedItem] = useState<PlayerListItem | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const { settings, setMatchPlayersColumns } = useTableSettings();
+  const columnVisibility = settings.matchPlayersColumns;
 
   const table = useReactTable({
     data: items,
     columns: playerListColumns,
+    enableMultiSort: true,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     onSortingChange: setSorting,
     getSortedRowModel: getSortedRowModel(),
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
+    onColumnVisibilityChange: setMatchPlayersColumns,
+    initialState: {
+      pagination: {
+        pageSize: PAGE_SIZE,
+      },
+    },
     state: {
       sorting,
       columnFilters,
+      columnVisibility,
     },
   });
 
@@ -61,6 +182,9 @@ export function PlayerTable({ items, loading }: PlayerTableProps) {
     setDialogOpen(false);
     setSelectedItem(null);
   };
+
+  const totalRows = table.getFilteredRowModel().rows.length;
+  const showPagination = totalRows > PAGE_SIZE;
 
   if (loading) {
     return (
@@ -81,35 +205,91 @@ export function PlayerTable({ items, loading }: PlayerTableProps) {
   }
 
   return (
-    <div className="w-full">
-      <div className="flex items-center py-4">
+    <div className="w-full space-y-2">
+      <div className="flex items-center justify-between py-2">
         <Input
           placeholder="Filter by name..."
-          value={(table.getColumn("primaryName")?.getFilterValue() as string) ?? ""}
+          value={(table.getColumn("nameClean")?.getFilterValue() as string) ?? ""}
           onChange={(event) =>
-            table.getColumn("primaryName")?.setFilterValue(event.target.value)
+            table.getColumn("nameClean")?.setFilterValue(event.target.value)
           }
           className="max-w-sm"
         />
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button variant="outline" size="sm">
+              <Settings2 />
+              Columns
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="right" className="overflow-y-auto">
+            <SheetHeader>
+              <SheetTitle>Table Settings</SheetTitle>
+            </SheetHeader>
+            <div className="flex flex-col gap-4 px-4 pb-4">
+              {/* Player-specific columns */}
+              <div className="space-y-2">
+                <div className="text-sm font-medium text-muted-foreground">
+                  Player Info
+                </div>
+                <div className="flex flex-col gap-2 ml-4">
+                  {[PlayerColumnId.matchCount, PlayerColumnId.matchDate].map((colId) => {
+                    const column = table.getColumn(colId);
+                    if (!column || !column.getCanHide()) return null;
+                    return (
+                      <div key={colId} className="flex items-center gap-2">
+                        <Checkbox
+                          id={colId}
+                          checked={column.getIsVisible()}
+                          onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                        />
+                        <Label htmlFor={colId} className="text-sm cursor-pointer">
+                          {playerColumnLabels[colId]}
+                        </Label>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+              {/* Match stats columns */}
+              <div className="text-sm font-medium text-muted-foreground">
+                Match Stats
+              </div>
+              {columnGroups.map((group) => (
+                <ColumnGroupSection
+                  key={group.label}
+                  group={group}
+                  table={table}
+                />
+              ))}
+            </div>
+          </SheetContent>
+        </Sheet>
       </div>
       <div className="rounded-md border">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id} className="group">
-                {headerGroup.headers.map((header) => (
-                  <TableHead
-                    key={header.id}
-                    className="bg-accent group-hover:bg-muted border-b border-zinc-200 dark:border-zinc-800"
-                  >
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
-                  </TableHead>
-                ))}
+                {headerGroup.headers.map((header) => {
+                  const isSticky = header.column.id === "nameClean";
+                  return (
+                    <TableHead
+                      key={header.id}
+                      className={cn(
+                        "bg-accent group-hover:bg-muted border-b border-zinc-200 dark:border-zinc-800",
+                        isSticky && "sticky left-0",
+                      )}
+                    >
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                    </TableHead>
+                  );
+                })}
               </TableRow>
             ))}
           </TableHeader>
@@ -118,17 +298,26 @@ export function PlayerTable({ items, loading }: PlayerTableProps) {
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
-                  className="cursor-pointer hover:bg-muted/50"
+                  className="cursor-pointer group"
                   onClick={() => handleRowClick(row.original)}
                 >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
-                  ))}
+                  {row.getVisibleCells().map((cell) => {
+                    const isSticky = cell.column.id === "nameClean";
+                    return (
+                      <TableCell
+                        key={cell.id}
+                        className={cn(
+                          "border-b",
+                          isSticky && "sticky left-0 bg-background group-hover:bg-muted",
+                        )}
+                      >
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
+                    );
+                  })}
                 </TableRow>
               ))
             ) : (
@@ -144,7 +333,9 @@ export function PlayerTable({ items, loading }: PlayerTableProps) {
           </TableBody>
         </Table>
       </div>
-      <TablePagination table={table} rowCountLabel="player(s)" />
+      {showPagination && (
+        <TablePagination table={table} rowCountLabel="player(s)" />
+      )}
       <PlayerDialog
         item={selectedItem}
         open={dialogOpen}

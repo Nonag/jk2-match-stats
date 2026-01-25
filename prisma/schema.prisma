@@ -15,7 +15,7 @@ model Match {
   createdAt    DateTime      @default(now())
   date         DateTime
   duration     Int           // Match length in minutes
-  fileName      String        @unique
+  fileName     String        @unique
   mapName      String
   matchPlayers MatchPlayer[]
   redScore     Int
@@ -56,10 +56,10 @@ model MatchPlayer {
   dfaReturns        Int
   doomKills         Int
   doomReturns       Int
-  flagGrabsCurrent   Int
-  flagGrabsSum       Int
-  flagHoldCurrent    Int
-  flagHoldSum        Int
+  flagGrabsCurrent  Int
+  flagGrabsSum      Int
+  flagHoldCurrent   Int
+  flagHoldSum       Int
   gauntletCurrent   Int      // Legacy stat
   gauntletSum       Int      // Legacy stat
   glicko2Deviation  Float
@@ -109,12 +109,15 @@ model MatchPlayer {
 }
 
 model Player {
-  id           String        @id @default(cuid())
-  aliases      PlayerAlias[]
-  createdAt    DateTime      @default(now())
-  matchPlayers MatchPlayer[]
-  primaryName  String
-  updatedAt    DateTime      @updatedAt
+  id              String        @id @default(cuid())
+  aliasPrimary    String
+  aliases         PlayerAlias[]
+  createdAt       DateTime      @default(now())
+  matchCount      Int           @default(0)
+  matchDateLatest DateTime?
+  matchPlayers    MatchPlayer[]
+  matchStats      Json          @default(dbgenerated("'{}'"))
+  updatedAt       DateTime      @updatedAt
 }
 
 model PlayerAlias {

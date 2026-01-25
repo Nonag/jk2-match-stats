@@ -74,9 +74,9 @@ export function useCreatePlayer() {
   });
 
   return {
-    createPlayer: async (primaryName: string) => {
+    createPlayer: async (aliasPrimary: string) => {
       try {
-        const result = await mutation.mutateAsync(primaryName);
+        const result = await mutation.mutateAsync(aliasPrimary);
         return result;
       } catch {
         return null;
@@ -91,8 +91,8 @@ export function useRenamePlayer() {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: ({ id, primaryName }: { id: string; primaryName: string }) =>
-      renamePlayer(id, primaryName),
+    mutationFn: ({ id, aliasPrimary }: { id: string; aliasPrimary: string }) =>
+      renamePlayer(id, aliasPrimary),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: playerKeys.all });
       queryClient.invalidateQueries({ queryKey: playerKeys.combined });
@@ -100,9 +100,9 @@ export function useRenamePlayer() {
   });
 
   return {
-    renamePlayer: async (id: string, primaryName: string) => {
+    renamePlayer: async (id: string, aliasPrimary: string) => {
       try {
-        await mutation.mutateAsync({ id, primaryName });
+        await mutation.mutateAsync({ id, aliasPrimary });
         return true;
       } catch {
         return false;

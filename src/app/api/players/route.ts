@@ -4,7 +4,7 @@ import {
   createPlayer,
   getPlayersAndUnassignedMatchPlayers,
   getAllMatchPlayersForSuggestions,
-  updatePlayerPrimaryName,
+  updatePlayerAlias,
   deletePlayer,
 } from "@/lib/db/player";
 
@@ -36,16 +36,16 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const { primaryName } = await request.json();
+    const { aliasPrimary } = await request.json();
 
-    if (!primaryName || typeof primaryName !== "string") {
+    if (!aliasPrimary || typeof aliasPrimary !== "string") {
       return NextResponse.json(
-        { error: "Primary name is required" },
+        { error: "Primary alias is required" },
         { status: 400 }
       );
     }
 
-    const player = await createPlayer(primaryName);
+    const player = await createPlayer(aliasPrimary);
     return NextResponse.json(player);
   } catch (error) {
     console.error("Error creating player:", error);
@@ -58,16 +58,16 @@ export async function POST(request: Request) {
 
 export async function PATCH(request: Request) {
   try {
-    const { id, primaryName } = await request.json();
+    const { id, aliasPrimary } = await request.json();
 
-    if (!id || !primaryName || typeof primaryName !== "string") {
+    if (!id || !aliasPrimary || typeof aliasPrimary !== "string") {
       return NextResponse.json(
-        { error: "id and primaryName are required" },
+        { error: "id and aliasPrimary are required" },
         { status: 400 }
       );
     }
 
-    await updatePlayerPrimaryName(id, primaryName);
+    await updatePlayerAlias(id, aliasPrimary);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error updating player:", error);
