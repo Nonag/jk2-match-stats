@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ColumnFiltersState,
@@ -15,6 +15,7 @@ import {
 import { Settings2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { ButtonGroup } from "@/components/ui/button-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -148,8 +149,17 @@ export function PlayerTable({ items, loading }: PlayerTableProps) {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [selectedItem, setSelectedItem] = useState<PlayerListItem | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const { settings, setMatchPlayersColumns } = useTableSettings();
+
+  const { settings, setMatchPlayersColumns, setPlayerFilterMode } = useTableSettings();
+
   const columnVisibility = settings.matchPlayersColumns;
+  const playerFilterMode = settings.playerFilterMode;
+
+  // Filter items based on playerFilterMode
+  const filteredItems = useMemo(() => {
+    if (playerFilterMode === "all") return items;
+    return items.filter((item) => item.type === playerFilterMode);
+  }, [items, playerFilterMode]);
 
   const handleNameClick = (item: PlayerListItem) => {
     setSelectedItem(item);
@@ -157,35 +167,39 @@ export function PlayerTable({ items, loading }: PlayerTableProps) {
   };
 
   const handleRowClick = (item: PlayerListItem) => {
-    // Only navigate for matchplayers that have a matchId
-    if (item.type === "matchplayer" && item.matchId) {
+    // Navigate to player detail page for players
+    if (item.type === "player") {
+      router.push(`/players/${item.id}`);
+    }
+    // Navigate to match detail page for matchplayers that have a matchId
+    else if (item.type === "matchplayer" && item.matchId) {
       router.push(`/matches/${item.matchId}`);
     }
   };
 
   const table = useReactTable({
-    data: items,
     columns: playerListColumns,
+    data: filteredItems,
     enableMultiSort: true,
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    onSortingChange: setSorting,
-    getSortedRowModel: getSortedRowModel(),
-    onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
-    onColumnVisibilityChange: setMatchPlayersColumns,
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
     initialState: {
       pagination: {
         pageSize: PAGE_SIZE,
       },
     },
+    meta: {
+      onNameClick: handleNameClick,
+    },
+    onColumnFiltersChange: setColumnFilters,
+    onColumnVisibilityChange: setMatchPlayersColumns,
+    onSortingChange: setSorting,
     state: {
       sorting,
       columnFilters,
       columnVisibility,
-    },
-    meta: {
-      onNameClick: handleNameClick,
     },
   });
 
@@ -226,7 +240,31 @@ export function PlayerTable({ items, loading }: PlayerTableProps) {
           }
           className="max-w-sm"
         />
-        <Sheet>
+        <div className="flex items-center gap-2">
+          <ButtonGroup>
+            <Button
+              onClick={() => setPlayerFilterMode("all")}
+              size="sm"
+              variant={playerFilterMode === "all" ? "default" : "outline"}
+            >
+              All
+            </Button>
+            <Button
+              onClick={() => setPlayerFilterMode("player")}
+              size="sm"
+              variant={playerFilterMode === "player" ? "default" : "outline"}
+            >
+              Players
+            </Button>
+            <Button
+              onClick={() => setPlayerFilterMode("matchplayer")}
+              size="sm"
+              variant={playerFilterMode === "matchplayer" ? "default" : "outline"}
+            >
+              Unassigned
+            </Button>
+          </ButtonGroup>
+          <Sheet>
           <SheetTrigger asChild>
             <Button variant="outline" size="sm">
               <Settings2 />
@@ -276,6 +314,7 @@ export function PlayerTable({ items, loading }: PlayerTableProps) {
             </div>
           </SheetContent>
         </Sheet>
+        </div>
       </div>
       <div className="rounded-md border">
         <Table>

@@ -3,12 +3,13 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   assignMatchPlayer,
+  assignPlayer,
   createPlayer,
   deletePlayer,
+  getPlayer,
   getPlayers,
   getPlayersAndMatchPlayers,
   getSuggestions,
-  linkPlayer,
   mergePlayers,
   renamePlayer,
   unlinkPlayer,
@@ -19,6 +20,7 @@ export const playerKeys = {
   all: ["players"] as const,
   combined: ["players", "combined"] as const,
   suggestions: ["players", "suggestions"] as const,
+  detail: (id: string) => ["players", id] as const,
 };
 
 export function usePlayers() {
@@ -29,6 +31,20 @@ export function usePlayers() {
 
   return {
     players: data ?? [],
+    loading: isLoading,
+    error: error as Error | null,
+    refetch,
+  };
+}
+
+export function usePlayer(id: string) {
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: playerKeys.detail(id),
+    queryFn: () => getPlayer(id),
+  });
+
+  return {
+    player: data ?? null,
     loading: isLoading,
     error: error as Error | null,
     refetch,
@@ -138,12 +154,12 @@ export function useDeletePlayer() {
   };
 }
 
-export function useLinkPlayer() {
+export function useAssignPlayer() {
   const queryClient = useQueryClient();
 
-  const linkMutation = useMutation({
+  const assignMutation = useMutation({
     mutationFn: ({ matchPlayerId, playerId }: { matchPlayerId: string; playerId: string }) =>
-      linkPlayer(matchPlayerId, playerId),
+      assignPlayer(matchPlayerId, playerId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: matchKeys.all });
       queryClient.invalidateQueries({ queryKey: playerKeys.all });
@@ -151,8 +167,8 @@ export function useLinkPlayer() {
     },
   });
 
-  const unlinkMutation = useMutation({
-    mutationFn: unlinkPlayer,
+  const unassignMutation = useMutation({
+    mutationFn: unassignPlayer,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: matchKeys.all });
       queryClient.invalidateQueries({ queryKey: playerKeys.all });
@@ -161,24 +177,24 @@ export function useLinkPlayer() {
   });
 
   return {
-    linkPlayer: async (matchPlayerId: string, playerId: string) => {
+    assignPlayer: async (matchPlayerId: string, playerId: string) => {
       try {
-        await linkMutation.mutateAsync({ matchPlayerId, playerId });
+        await assignMutation.mutateAsync({ matchPlayerId, playerId });
         return true;
       } catch {
         return false;
       }
     },
-    unlinkPlayer: async (matchPlayerId: string) => {
+    unassignPlayer: async (matchPlayerId: string) => {
       try {
-        await unlinkMutation.mutateAsync(matchPlayerId);
+        await unassignMutation.mutateAsync(matchPlayerId);
         return true;
       } catch {
         return false;
       }
     },
-    loading: linkMutation.isPending || unlinkMutation.isPending,
-    error: (linkMutation.error || unlinkMutation.error) as Error | null,
+    loading: assignMutation.isPending || unassignMutation.isPending,
+    error: (assignMutation.error || unassignMutation.error) as Error | null,
   };
 }
 

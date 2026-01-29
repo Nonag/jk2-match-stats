@@ -12,9 +12,12 @@ import { defaultColumnVisibility } from "@/components/match/match-players-config
 
 const STORAGE_KEY = "table-settings";
 
+export type PlayerFilterMode = "all" | "player" | "matchplayer";
+
 interface TableSettings {
   lockTeamSort: boolean;
   matchPlayersColumns: VisibilityState;
+  playerFilterMode: PlayerFilterMode;
   pageSize: number;
 }
 
@@ -23,6 +26,7 @@ const DEFAULT_PAGE_SIZE = 10;
 const defaultSettings: TableSettings = {
   lockTeamSort: true,
   matchPlayersColumns: defaultColumnVisibility,
+  playerFilterMode: "all",
   pageSize: DEFAULT_PAGE_SIZE,
 };
 
@@ -30,6 +34,7 @@ interface TableSettingsContextValue {
   resetMatchPlayersColumns: () => void;
   setLockTeamSort: (locked: boolean) => void;
   setMatchPlayersColumns: (updater: Updater<VisibilityState>) => void;
+  setPlayerFilterMode: (mode: PlayerFilterMode) => void;
   setPageSize: (size: number) => void;
   settings: TableSettings;
 }
@@ -101,12 +106,17 @@ export function TableSettingsProvider({ children }: { children: ReactNode }) {
     updateSettings({ ...currentSettings, pageSize: size });
   }, []);
 
+  const setPlayerFilterMode = useCallback((mode: PlayerFilterMode) => {
+    updateSettings({ ...currentSettings, playerFilterMode: mode });
+  }, []);
+
   return (
     <TableSettingsContext.Provider
       value={{
         resetMatchPlayersColumns,
         setLockTeamSort,
         setMatchPlayersColumns,
+        setPlayerFilterMode,
         setPageSize,
         settings,
       }}

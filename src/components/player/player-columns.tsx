@@ -141,7 +141,9 @@ const customColumns: Partial<Record<ColumnId, ColumnDef<PlayerListItem>>> = {
       const nameClean = row.getValue(ColumnId.nameClean) as string;
       const playerAlias = row.original.playerAlias;
       const isPlayer = row.original.type === "player";
-      const onNameClick = (table.options.meta as { onNameClick?: (item: PlayerListItem) => void })?.onNameClick;
+      const meta = table.options.meta as { onNameClick?: (item: PlayerListItem) => void } | undefined;
+      const onNameClick = meta?.onNameClick;
+
       return (
         <button
           type="button"

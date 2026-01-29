@@ -35,7 +35,10 @@ function getBreadcrumbs(pathname: string): BreadcrumbSegment[] {
       breadcrumbs.push({ label: "Match Details" });
     }
   } else if (segments[0] === "players") {
-    breadcrumbs.push({ label: "Players" });
+    breadcrumbs.push({ label: "Players", href: "/players" });
+    if (segments[1]) {
+      breadcrumbs.push({ label: "Player Details" });
+    }
   } else if (segments[0] === "import") {
     breadcrumbs.push({ label: "Import" });
   } else {

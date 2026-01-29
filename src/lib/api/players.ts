@@ -1,9 +1,25 @@
 import type { PlayerListItem, PlayerDetail } from "@/lib/db/player";
+import type { MatchPlayerDetail } from "@/lib/db/match";
 
 export async function getPlayers(): Promise<PlayerDetail[]> {
   const response = await fetch("/api/players");
   if (!response.ok) throw new Error("Failed to fetch players");
   return response.json();
+}
+
+export async function getPlayer(id: string): Promise<PlayerDetail & { matchPlayers: MatchPlayerDetail[] }> {
+  const response = await fetch(`/api/players/${id}`);
+  if (!response.ok) throw new Error("Failed to fetch player");
+  const data = await response.json();
+  // Convert date strings back to Date objects
+  return {
+    ...data,
+    matchDateLatest: data.matchDateLatest ? new Date(data.matchDateLatest) : null,
+    matchPlayers: data.matchPlayers.map((mp: MatchPlayerDetail & { matchDate: string }) => ({
+      ...mp,
+      matchDate: new Date(mp.matchDate),
+    })),
+  };
 }
 
 export async function getPlayersAndMatchPlayers(): Promise<PlayerListItem[]> {
@@ -61,27 +77,27 @@ export async function deletePlayer(id: string): Promise<void> {
   }
 }
 
-export async function linkPlayer(matchPlayerId: string, playerId: string): Promise<void> {
-  const response = await fetch("/api/players/link", {
+export async function assignPlayer(matchPlayerId: string, playerId: string): Promise<void> {
+  const response = await fetch("/api/players/assign", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ matchPlayerId, playerId }),
   });
   if (!response.ok) {
     const data = await response.json();
-    throw new Error(data.error || "Failed to link player");
+    throw new Error(data.error || "Failed to assign player");
   }
 }
 
-export async function unlinkPlayer(matchPlayerId: string): Promise<void> {
-  const response = await fetch("/api/players/link", {
-    method: "DELETE",
+export async function unassignPlayer(matchPlayerId: string): Promise<void> {
+  const response = await fetch("/api/players/unassign", {
+    method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ matchPlayerId }),
   });
   if (!response.ok) {
     const data = await response.json();
-    throw new Error(data.error || "Failed to unlink player");
+    throw new Error(data.error || "Failed to unassign player");
   }
 }
 

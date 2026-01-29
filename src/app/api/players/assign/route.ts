@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { assignMatchPlayerById } from "@/lib/db/player";
+import { assignMatchPlayerToPlayer } from "@/lib/db/player";
 
 export async function POST(request: Request) {
   try {
@@ -12,7 +12,7 @@ export async function POST(request: Request) {
       );
     }
 
-    await assignMatchPlayerById(matchPlayerId, playerId);
+    await assignMatchPlayerToPlayer(matchPlayerId, playerId);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error assigning match player:", error);

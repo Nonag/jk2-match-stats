@@ -1,5 +1,6 @@
 import prisma from "./client";
 import type { MatchPlayerDetail, MatchStats } from "./match";
+import { extractMatchStats, sumMatchStats } from "./match";
 
 export interface PlayerAlias {
   id: string;
@@ -105,20 +106,22 @@ export async function linkAliasToPlayer(
   });
 }
 
-export async function linkMatchPlayerToPlayer(
+export async function assignMatchPlayerToPlayer(
   matchPlayerId: string,
   playerId: string
 ): Promise<void> {
   const matchPlayer = await prisma.matchPlayer.findUnique({
     where: { id: matchPlayerId },
-    select: { nameClean: true, nameRaw: true },
+    select: { nameClean: true, nameRaw: true, playerId: true },
   });
 
   if (!matchPlayer) {
     throw new Error("Match player not found");
   }
 
-  // Update the match player to link to the player
+  const oldPlayerId = matchPlayer.playerId;
+
+  // Update the match player to assign to the player
   await prisma.matchPlayer.update({
     where: { id: matchPlayerId },
     data: { playerId },
@@ -126,13 +129,34 @@ export async function linkMatchPlayerToPlayer(
 
   // Add the alias to the player
   await linkAliasToPlayer(playerId, matchPlayer.nameClean, matchPlayer.nameRaw);
+
+  // Recalculate stats for new player
+  await recalculatePlayerStats(playerId);
+
+  // Recalculate stats for old player if there was one
+  if (oldPlayerId && oldPlayerId !== playerId) {
+    await recalculatePlayerStats(oldPlayerId);
+  }
 }
 
 export async function unlinkMatchPlayerFromPlayer(matchPlayerId: string): Promise<void> {
+  // Get the current player before unlinking
+  const matchPlayer = await prisma.matchPlayer.findUnique({
+    where: { id: matchPlayerId },
+    select: { playerId: true },
+  });
+
+  const playerId = matchPlayer?.playerId;
+
   await prisma.matchPlayer.update({
     where: { id: matchPlayerId },
     data: { playerId: null },
   });
+
+  // Recalculate stats for the player that was unlinked
+  if (playerId) {
+    await recalculatePlayerStats(playerId);
+  }
 }
 
 export async function getUnlinkedMatchPlayers(): Promise<
@@ -182,7 +206,7 @@ export async function getPlayersAndUnassignedMatchPlayers(): Promise<PlayerListI
   });
 
   const playerItems: PlayerListItem[] = players.map((player) => {
-    const stats = player.matchStats as unknown as MatchStats;
+    const stats = (player.matchStats as unknown as MatchStats) ?? {};
 
     return {
       ...stats,
@@ -204,14 +228,14 @@ export async function getPlayersAndUnassignedMatchPlayers(): Promise<PlayerListI
     } as PlayerListItem;
   });
 
-  // Get individual unassigned matchplayers (Red/Blue only)
-  const unassignedMatchPlayers = await prisma.matchPlayer.findMany({
-    where: { playerId: null, team: { in: ["Red", "Blue"] } },
+  // Get ALL matchplayers (Red/Blue only) - not just unassigned
+  const allMatchPlayers = await prisma.matchPlayer.findMany({
+    where: { team: { in: ["Red", "Blue"] } },
     include: { match: { select: { date: true } } },
     orderBy: { match: { date: "desc" } },
   });
 
-  const unassignedItems: PlayerListItem[] = unassignedMatchPlayers.map((mp) => ({
+  const matchPlayerItems: PlayerListItem[] = allMatchPlayers.map((mp) => ({
     ...mp,
     aliasPrimary: mp.nameClean,
     aliases: [],
@@ -224,7 +248,7 @@ export async function getPlayersAndUnassignedMatchPlayers(): Promise<PlayerListI
   }));
 
   // Combine and sort by most recent match
-  const allItems = [...playerItems, ...unassignedItems];
+  const allItems = [...playerItems, ...matchPlayerItems];
   allItems.sort((a, b) => {
     if (!a.matchDateLatest && !b.matchDateLatest) return 0;
     if (!a.matchDateLatest) return 1;
@@ -300,29 +324,51 @@ export async function mergePlayers(
       where: { id: { in: sourcePlayerIds } },
     });
   });
+
+  // Recalculate stats for target player after merge
+  await recalculatePlayerStats(targetPlayerId);
 }
 
-// Assign a single matchPlayer to a player by matchPlayer ID
-export async function assignMatchPlayerById(
-  matchPlayerId: string,
-  playerId: string
-): Promise<void> {
-  // Get the matchPlayer to get nameClean and nameRaw for alias
-  const matchPlayer = await prisma.matchPlayer.findUnique({
-    where: { id: matchPlayerId },
-    select: { nameClean: true, nameRaw: true },
+// Recalculate a player's matchCount, matchDateLatest, and matchStats from their matchPlayers
+export async function recalculatePlayerStats(playerId: string): Promise<void> {
+  // Get all matchPlayers for this player (excluding Spectator)
+  const matchPlayers = await prisma.matchPlayer.findMany({
+    where: { playerId, team: { in: ["Red", "Blue"] } },
+    include: { match: { select: { date: true } } },
   });
 
-  if (!matchPlayer) return;
+  if (matchPlayers.length === 0) {
+    // No matches - reset to defaults
+    await prisma.player.update({
+      where: { id: playerId },
+      data: {
+        matchCount: 0,
+        matchDateLatest: null,
+        matchStats: {},
+      },
+    });
+    return;
+  }
 
-  // Update this single matchPlayer
-  await prisma.matchPlayer.update({
-    where: { id: matchPlayerId },
-    data: { playerId },
+  // Calculate aggregated stats
+  const statsArray = matchPlayers.map((mp) => extractMatchStats(mp));
+  const aggregatedStats = sumMatchStats(statsArray);
+
+  // Find latest match date
+  const latestDate = matchPlayers.reduce((latest, mp) => {
+    const date = mp.match.date;
+    return !latest || date > latest ? date : latest;
+  }, null as Date | null);
+
+  // Update player
+  await prisma.player.update({
+    where: { id: playerId },
+    data: {
+      matchCount: matchPlayers.length,
+      matchDateLatest: latestDate,
+      matchStats: aggregatedStats as unknown as Record<string, number>,
+    },
   });
-
-  // Add alias to player
-  await linkAliasToPlayer(playerId, matchPlayer.nameClean, matchPlayer.nameRaw);
 }
 
 // Delete a player
