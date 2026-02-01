@@ -1,18 +1,15 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useRouter } from "next/navigation";
 import {
-  ColumnFiltersState,
-  SortingState,
   flexRender,
   getCoreRowModel,
-  getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { addDays, format, subDays, subMonths, subYears } from "date-fns";
+import { format, subDays, subMonths, subYears, addDays } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { DateRange } from "react-day-picker";
 
@@ -34,53 +31,45 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import { useTableState } from "@/hooks/use-table-state";
+import { useQueryStates, parseAsIsoDateTime, parseAsString } from "nuqs";
 import { matchColumns } from "./match-columns";
 import type { MatchSummary } from "@/lib/db/match";
 
 export type DatePreset = "week" | "month" | "year" | "custom";
 
 interface MatchTableProps {
-  datePreset: DatePreset;
-  dateRange: DateRange | undefined;
   loading?: boolean;
   matches: MatchSummary[];
-  onDatePresetChange: (preset: DatePreset) => void;
-  onDateRangeChange: (range: DateRange | undefined) => void;
+  onDateRangeChange?: (range: DateRange | undefined) => void;
 }
 
-export function MatchTable({
-  datePreset,
-  dateRange,
-  loading,
-  matches,
-  onDatePresetChange,
-  onDateRangeChange,
-}: MatchTableProps) {
+export function MatchTable({ loading, matches, onDateRangeChange }: MatchTableProps) {
   const router = useRouter();
-  const [sorting, setSorting] = useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
-  const handlePresetChange = (preset: DatePreset) => {
-    onDatePresetChange(preset);
-    const today = new Date();
-    switch (preset) {
-      case "week":
-        onDateRangeChange({ from: subDays(today, 7), to: today });
-        break;
-      case "month":
-        onDateRangeChange({ from: subMonths(today, 1), to: today });
-        break;
-      case "year":
-        onDateRangeChange({ from: subYears(today, 1), to: today });
-        break;
-    }
-  };
+  const { sorting, pagination, setSorting, setPagination } = useTableState({ defaultPageSize: 10 });
 
-  const handleDateRangeChange = (range: DateRange | undefined) => {
-    onDateRangeChange(range);
-    onDatePresetChange("custom");
-  };
+  const [dateState, setDateState] = useQueryStates(
+    {
+      datePreset: parseAsString,
+      from: parseAsIsoDateTime,
+      to: parseAsIsoDateTime,
+    },
+    { history: "push", shallow: true },
+  );
 
+  const datePreset = (dateState.datePreset as DatePreset | null) ?? undefined;
+  const dateRange = useMemo(() => {
+    if (!dateState.from) return undefined;
+    return { from: dateState.from, to: dateState.to ?? undefined };
+  }, [dateState.from, dateState.to]);
+
+  // Notify parent when date range changes
+  useMemo(() => {
+    onDateRangeChange?.(dateRange);
+  }, [dateRange, onDateRangeChange]);
+
+  // Filter matches by date range client-side
   const filteredMatches = useMemo(() => {
     if (!dateRange?.from) return matches;
 
@@ -92,18 +81,44 @@ export function MatchTable({
     });
   }, [matches, dateRange]);
 
+  const handlePresetChange = (preset: DatePreset) => {
+    const today = new Date();
+    let newRange: DateRange | undefined;
+
+    switch (preset) {
+      case "week":
+        newRange = { from: subDays(today, 7), to: today };
+        break;
+      case "month":
+        newRange = { from: subMonths(today, 1), to: today };
+        break;
+      case "year":
+        newRange = { from: subYears(today, 1), to: today };
+        break;
+    }
+
+    setDateState({ datePreset: preset, from: newRange?.from ?? null, to: newRange?.to ?? null });
+    setPagination({ pageIndex: 0, pageSize: pagination.pageSize });
+  };
+
+  const handleDateRangeChange = (range: DateRange | undefined) => {
+    setDateState({ datePreset: "custom", from: range?.from ?? null, to: range?.to ?? null });
+    setPagination({ pageIndex: 0, pageSize: pagination.pageSize });
+  };
+
   const table = useReactTable({
-    data: filteredMatches,
+    autoResetPageIndex: false,
     columns: matchColumns,
+    data: filteredMatches,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    onSortingChange: setSorting,
     getSortedRowModel: getSortedRowModel(),
-    onColumnFiltersChange: setColumnFilters,
-    getFilteredRowModel: getFilteredRowModel(),
+    manualPagination: false,
+    onPaginationChange: setPagination,
+    onSortingChange: setSorting,
     state: {
+      pagination,
       sorting,
-      columnFilters,
     },
   });
 
@@ -111,16 +126,6 @@ export function MatchTable({
     return (
       <div className="flex items-center justify-center py-8">
         <p className="text-muted-foreground">Loading matches...</p>
-      </div>
-    );
-  }
-
-  if (matches.length === 0) {
-    return (
-      <div className="flex items-center justify-center py-8">
-        <p className="text-muted-foreground">
-          No matches found. Import a CSV file to get started.
-        </p>
       </div>
     );
   }
@@ -239,7 +244,9 @@ export function MatchTable({
                   colSpan={matchColumns.length}
                   className="h-24 text-center"
                 >
-                  No results.
+                  {matches.length === 0
+                    ? "No matches found. Import a CSV file to get started."
+                    : "No matches found for selected date range."}
                 </TableCell>
               </TableRow>
             )}

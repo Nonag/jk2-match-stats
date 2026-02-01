@@ -4,12 +4,11 @@ import { Column, ColumnDef } from "@tanstack/react-table";
 import { BadgeCheck } from "lucide-react";
 
 import { SortableHeader } from "@/components/match/sortable-header";
-import { columnConfig, ColumnId } from "@/components/match/match-players-config";
+import { columnConfig, ColumnId } from "@/components/match/match-player-config";
 import { formatDate, formatDuration } from "@/lib/utils";
-import { useTableSettings } from "@/providers";
 import type { PlayerListItem } from "@/lib/db/player";
 
-// Player-specific column IDs (not in match-players-config)
+// Player-specific column IDs (not in match-player-config)
 export enum PlayerColumnId {
   matchCount = "matchCount",
   matchDate = "matchDate",
@@ -21,10 +20,8 @@ interface PlayerSortableHeaderProps {
 
 function PlayerSortableHeader({ column }: PlayerSortableHeaderProps) {
   const cfg = columnConfig[column.id as ColumnId];
-  const { settings } = useTableSettings();
-  const lockTeamSort = settings.lockTeamSort;
   const sortIndex = column.getSortIndex();
-  const sortPriority = sortIndex >= 0 ? (lockTeamSort ? sortIndex : sortIndex + 1) : undefined;
+  const sortPriority = sortIndex >= 0 ? sortIndex + 1 : undefined;
 
   return (
     <SortableHeader
@@ -92,10 +89,8 @@ const playerSpecificColumns: ColumnDef<PlayerListItem>[] = [
       const matchDate = row.original.matchDate;
       const matchDateLatest = row.original.matchDateLatest;
       const date = matchDate ?? matchDateLatest;
-      const isLast = !matchDate && matchDateLatest;
       return date ? (
         <span className="text-muted-foreground whitespace-nowrap">
-          {isLast && <span className="text-xs mr-1">Last:</span>}
           {formatDate(date)}
         </span>
       ) : (
@@ -319,16 +314,29 @@ const customColumns: Partial<Record<ColumnId, ColumnDef<PlayerListItem>>> = {
   },
 };
 
-// Generate columns from match-players-config, reusing the same structure
-const matchPlayersBasedColumns: ColumnDef<PlayerListItem>[] = (
+// Generate columns from match-player-config, reusing the same structure
+const matchPlayerBasedColumns: ColumnDef<PlayerListItem>[] = (
   Object.keys(columnConfig) as ColumnId[]
 ).map((id) => customColumns[id] ?? createNumericColumn(id));
 
+// Hidden column for player type filtering (all/player/matchplayer)
+const playerTypeFilterColumn: ColumnDef<PlayerListItem> = {
+  id: "playerType",
+  accessorKey: "type",
+  enableHiding: true,
+  enableSorting: false,
+  filterFn: (row, _columnId, filterValue) => {
+    const rowType = row.original.type;
+    return rowType === filterValue;
+  },
+};
+
 // Final column order: nameClean first (sticky), then player-specific, then rest of match-player columns
 export const playerListColumns: ColumnDef<PlayerListItem>[] = [
-  matchPlayersBasedColumns[0], // team (hidden but needed for row coloring)
-  matchPlayersBasedColumns[1], // nameClean (sticky)
+  playerTypeFilterColumn,
+  matchPlayerBasedColumns[0], // team (hidden but needed for row coloring)
+  matchPlayerBasedColumns[1], // nameClean (sticky)
   playerSpecificColumns[0], // matchCount
   playerSpecificColumns[1], // matchDate
-  ...matchPlayersBasedColumns.slice(2), // rest of match-player columns
+  ...matchPlayerBasedColumns.slice(2), // rest of match-player columns
 ];

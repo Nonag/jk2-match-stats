@@ -4,8 +4,7 @@ import { Column, ColumnDef } from "@tanstack/react-table";
 
 import type { MatchPlayerDetail } from "@/lib/db/match";
 import { formatDuration } from "@/lib/utils";
-import { useTableSettings } from "@/providers";
-import { columnConfig, ColumnId } from "./match-players-config";
+import { columnConfig, ColumnId } from "./match-player-config";
 import { SortableHeader } from "./sortable-header";
 
 interface MatchPlayerSortableHeaderProps {
@@ -14,10 +13,8 @@ interface MatchPlayerSortableHeaderProps {
 
 function MatchPlayerSortableHeader({ column }: MatchPlayerSortableHeaderProps) {
   const cfg = columnConfig[column.id as ColumnId];
-  const { settings } = useTableSettings();
-  const lockTeamSort = settings.lockTeamSort;
   const sortIndex = column.getSortIndex();
-  const sortPriority = sortIndex >= 0 ? (lockTeamSort ? sortIndex : sortIndex + 1) : undefined;
+  const sortPriority = sortIndex >= 0 ? sortIndex + 1 : undefined;
 
   return (
     <SortableHeader
@@ -57,9 +54,9 @@ function CombinedCell({ attempts, kills, returns }: CombinedCellProps) {
 function createNumericColumn(id: ColumnId): ColumnDef<MatchPlayerDetail> {
   return {
     accessorKey: id,
-    header: ({ column }) => <MatchPlayerSortableHeader column={column} />,
-    enableHiding: columnConfig[id].canHide,
     cell: ({ row }) => <NumericCell value={row.getValue(id) as number} />,
+    enableHiding: columnConfig[id].canHide,
+    header: ({ column }) => <MatchPlayerSortableHeader column={column} />,
   };
 }
 
@@ -255,6 +252,6 @@ const customColumns: Partial<Record<ColumnId, ColumnDef<MatchPlayerDetail>>> = {
 };
 
 // Generate columns in the order defined in columnConfig
-export const matchPlayersColumns: ColumnDef<MatchPlayerDetail>[] = (
+export const matchPlayerColumns: ColumnDef<MatchPlayerDetail>[] = (
   Object.keys(columnConfig) as ColumnId[]
 ).map((id) => customColumns[id] ?? createNumericColumn(id));

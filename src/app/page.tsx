@@ -1,30 +1,22 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { differenceInDays, subDays } from "date-fns";
+import { differenceInDays } from "date-fns";
 import { DateRange } from "react-day-picker";
 
 import { SectionCards } from "@/components/layout";
-import { DatePreset, MatchTable } from "@/components/match";
+import { MatchTable } from "@/components/match";
 import { useMatches, useDashboardStats } from "@/lib/queries";
 
 const defaultStat = { current: 0, previous: 0, trend: 0 };
 const defaultTotals = { matches: 0, players: 0, avgFlagHold: 0, avgDuration: 0 };
 
 export default function HomePage() {
-  const [datePreset, setDatePreset] = useState<DatePreset>("week");
-  const [dateRange, setDateRange] = useState<DateRange | undefined>(() => {
-    const today = new Date();
-    return {
-      from: subDays(today, 7),
-      to: today,
-    };
-  });
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
 
-  // Calculate days from date range for stats API
   const days = useMemo(() => {
-    if (!dateRange?.from || !dateRange?.to) return 7;
-    return differenceInDays(dateRange.to, dateRange.from) || 7;
+    if (!dateRange?.from || !dateRange?.to) return undefined;
+    return differenceInDays(dateRange.to, dateRange.from) || 1;
   }, [dateRange]);
 
   const { matches, loading } = useMatches();
@@ -42,11 +34,8 @@ export default function HomePage() {
       />
       <div className="px-4 lg:px-6">
         <MatchTable
-          datePreset={datePreset}
-          dateRange={dateRange}
           loading={loading}
           matches={matches}
-          onDatePresetChange={setDatePreset}
           onDateRangeChange={setDateRange}
         />
       </div>

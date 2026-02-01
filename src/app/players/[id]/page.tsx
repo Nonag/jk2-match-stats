@@ -4,7 +4,7 @@ import { use } from "react";
 import { useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { MatchPlayersTable } from "@/components/match";
+import { MatchPlayerTable } from "@/components/match";
 import { usePlayer, useDeletePlayer } from "@/lib/queries";
 
 export default function PlayerDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -93,7 +93,7 @@ export default function PlayerDetailPage({ params }: { params: Promise<{ id: str
                 No match players assigned yet
               </p>
             ) : (
-              <MatchPlayersTable
+              <MatchPlayerTable
                 players={player.matchPlayers}
                 minimal
               />

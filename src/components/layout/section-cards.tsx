@@ -21,7 +21,7 @@ interface SectionCardsProps {
   activePlayers: StatWithTrend<number>;
   avgDuration: StatWithTrend<number>;
   avgFlagHold: StatWithTrend<number>;
-  days: number;
+  days: number | undefined;
   matches: StatWithTrend<number>;
   totals: {
     avgDuration: number;
@@ -31,8 +31,8 @@ interface SectionCardsProps {
   };
 }
 
-function TrendBadge({ trend, previousValue, days }: { trend: number; previousValue: string; days: number }) {
-  if (trend === 0) {
+function TrendBadge({ trend, previousValue, days }: { trend: number; previousValue: string; days: number | undefined }) {
+  if (trend === 0 || days === undefined) {
     return null;
   }
 
@@ -61,7 +61,7 @@ export function SectionCards({
   matches,
   totals,
 }: SectionCardsProps) {
-  const periodLabel = formatPeriod(days);
+  const periodLabel = days !== undefined ? formatPeriod(days) : null;
   return (
     <div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
       <Card className="@container/card">
@@ -74,11 +74,13 @@ export function SectionCards({
             <TrendBadge trend={activePlayers.trend} previousValue={String(activePlayers.previous)} days={days} />
           </CardAction>
         </CardHeader>
-        <CardFooter className="flex-col items-start gap-1.5 text-sm">
-          <div className="line-clamp-1 flex gap-2 font-medium">
-            {activePlayers.current} active {periodLabel} {activePlayers.trend !== 0 && (activePlayers.trend > 0 ? <TrendingUpIcon className="size-4" /> : <TrendingDownIcon className="size-4" />)}
-          </div>
-        </CardFooter>
+        {days !== undefined && (
+          <CardFooter className="flex-col items-start gap-1.5 text-sm">
+            <div className="line-clamp-1 flex gap-2 font-medium">
+              {activePlayers.current} active{periodLabel && ` ${periodLabel}`} {activePlayers.trend !== 0 && (activePlayers.trend > 0 ? <TrendingUpIcon className="size-4" /> : <TrendingDownIcon className="size-4" />)}
+            </div>
+          </CardFooter>
+        )}
       </Card>
       <Card className="@container/card">
         <CardHeader>
@@ -90,11 +92,13 @@ export function SectionCards({
             <TrendBadge trend={matches.trend} previousValue={String(matches.previous)} days={days} />
           </CardAction>
         </CardHeader>
-        <CardFooter className="flex-col items-start gap-1.5 text-sm">
-          <div className="line-clamp-1 flex gap-2 font-medium">
-            {matches.current} {periodLabel} {matches.trend !== 0 && (matches.trend > 0 ? <TrendingUpIcon className="size-4" /> : <TrendingDownIcon className="size-4" />)}
-          </div>
-        </CardFooter>
+        {days !== undefined && (
+          <CardFooter className="flex-col items-start gap-1.5 text-sm">
+            <div className="line-clamp-1 flex gap-2 font-medium">
+              {matches.current}{periodLabel && ` ${periodLabel}`} {matches.trend !== 0 && (matches.trend > 0 ? <TrendingUpIcon className="size-4" /> : <TrendingDownIcon className="size-4" />)}
+            </div>
+          </CardFooter>
+        )}
       </Card>
       <Card className="@container/card">
         <CardHeader>
@@ -106,11 +110,13 @@ export function SectionCards({
             <TrendBadge trend={avgFlagHold.trend} previousValue={formatDuration(avgFlagHold.previous)} days={days} />
           </CardAction>
         </CardHeader>
-        <CardFooter className="flex-col items-start gap-1.5 text-sm">
-          <div className="line-clamp-1 flex gap-2 font-medium">
-            {formatDuration(avgFlagHold.current)} {periodLabel} {avgFlagHold.trend !== 0 && (avgFlagHold.trend > 0 ? <TrendingUpIcon className="size-4" /> : <TrendingDownIcon className="size-4" />)}
-          </div>
-        </CardFooter>
+        {days !== undefined && (
+          <CardFooter className="flex-col items-start gap-1.5 text-sm">
+            <div className="line-clamp-1 flex gap-2 font-medium">
+              {formatDuration(avgFlagHold.current)}{periodLabel && ` ${periodLabel}`} {avgFlagHold.trend !== 0 && (avgFlagHold.trend > 0 ? <TrendingUpIcon className="size-4" /> : <TrendingDownIcon className="size-4" />)}
+            </div>
+          </CardFooter>
+        )}
       </Card>
       <Card className="@container/card">
         <CardHeader>
@@ -122,11 +128,13 @@ export function SectionCards({
             <TrendBadge trend={avgDuration.trend} previousValue={`${avgDuration.previous}m`} days={days} />
           </CardAction>
         </CardHeader>
-        <CardFooter className="flex-col items-start gap-1.5 text-sm">
-          <div className="line-clamp-1 flex gap-2 font-medium">
-            {avgDuration.current}m {periodLabel} {avgDuration.trend !== 0 && (avgDuration.trend > 0 ? <TrendingUpIcon className="size-4" /> : <TrendingDownIcon className="size-4" />)}
-          </div>
-        </CardFooter>
+        {days !== undefined && (
+          <CardFooter className="flex-col items-start gap-1.5 text-sm">
+            <div className="line-clamp-1 flex gap-2 font-medium">
+              {avgDuration.current}m{periodLabel && ` ${periodLabel}`} {avgDuration.trend !== 0 && (avgDuration.trend > 0 ? <TrendingUpIcon className="size-4" /> : <TrendingDownIcon className="size-4" />)}
+            </div>
+          </CardFooter>
+        )}
       </Card>
     </div>
   )

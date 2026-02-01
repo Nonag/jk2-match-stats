@@ -8,34 +8,30 @@ import {
   type ReactNode,
 } from "react";
 import { type Updater, type VisibilityState } from "@tanstack/react-table";
-import { defaultColumnVisibility } from "@/components/match/match-players-config";
+import { defaultColumnVisibility } from "@/components/match/match-player-config";
 
-const STORAGE_KEY = "table-settings";
+const MATCH_PLAYER_TABLE_COLUMNS_KEY = "match-player-table-columns";
+const PLAYER_TABLE_COLUMNS_KEY = "player-table-columns";
 
-export type PlayerFilterMode = "all" | "player" | "matchplayer";
-
+/**
+ * Table settings provider - stores ONLY column visibility per table
+ * All other table state (sorting, filters, pagination, mode, lock) is in URL params
+ */
 interface TableSettings {
-  lockTeamSort: boolean;
-  matchPlayersColumns: VisibilityState;
-  playerFilterMode: PlayerFilterMode;
-  pageSize: number;
+  matchPlayerTableColumns: VisibilityState;
+  playerTableColumns: VisibilityState;
 }
 
-const DEFAULT_PAGE_SIZE = 10;
-
 const defaultSettings: TableSettings = {
-  lockTeamSort: true,
-  matchPlayersColumns: defaultColumnVisibility,
-  playerFilterMode: "all",
-  pageSize: DEFAULT_PAGE_SIZE,
+  matchPlayerTableColumns: defaultColumnVisibility,
+  playerTableColumns: defaultColumnVisibility,
 };
 
 interface TableSettingsContextValue {
-  resetMatchPlayersColumns: () => void;
-  setLockTeamSort: (locked: boolean) => void;
-  setMatchPlayersColumns: (updater: Updater<VisibilityState>) => void;
-  setPlayerFilterMode: (mode: PlayerFilterMode) => void;
-  setPageSize: (size: number) => void;
+  resetMatchPlayerTableColumns: () => void;
+  resetPlayerTableColumns: () => void;
+  setMatchPlayerTableColumns: (updater: Updater<VisibilityState>) => void;
+  setPlayerTableColumns: (updater: Updater<VisibilityState>) => void;
   settings: TableSettings;
 }
 
@@ -62,16 +58,20 @@ function subscribe(callback: () => void): () => void {
 function updateSettings(newSettings: TableSettings) {
   currentSettings = newSettings;
   listeners.forEach((listener) => listener());
-  sessionStorage.setItem(STORAGE_KEY, JSON.stringify(newSettings));
+  sessionStorage.setItem(MATCH_PLAYER_TABLE_COLUMNS_KEY, JSON.stringify(newSettings.matchPlayerTableColumns));
+  sessionStorage.setItem(PLAYER_TABLE_COLUMNS_KEY, JSON.stringify(newSettings.playerTableColumns));
 }
 
 // Initialize from storage on first load (client-side only)
 if (typeof window !== "undefined") {
   try {
-    const stored = sessionStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      currentSettings = { ...defaultSettings, ...JSON.parse(stored) };
-    }
+    const matchPlayerTableColumns = sessionStorage.getItem(MATCH_PLAYER_TABLE_COLUMNS_KEY);
+    const playerTableColumns = sessionStorage.getItem(PLAYER_TABLE_COLUMNS_KEY);
+
+    currentSettings = {
+      matchPlayerTableColumns: matchPlayerTableColumns ? JSON.parse(matchPlayerTableColumns) : defaultColumnVisibility,
+      playerTableColumns: playerTableColumns ? JSON.parse(playerTableColumns) : defaultColumnVisibility,
+    };
   } catch {
     // Ignore parse errors
   }
@@ -80,44 +80,49 @@ if (typeof window !== "undefined") {
 export function TableSettingsProvider({ children }: { children: ReactNode }) {
   const settings = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
-  const setMatchPlayersColumns = useCallback(
+  const setPlayerTableColumns = useCallback(
     (updater: Updater<VisibilityState>) => {
       const newVisibility =
         typeof updater === "function"
-          ? updater(currentSettings.matchPlayersColumns)
+          ? updater(currentSettings.playerTableColumns)
           : updater;
-      updateSettings({ ...currentSettings, matchPlayersColumns: newVisibility });
+      updateSettings({ ...currentSettings, playerTableColumns: newVisibility });
     },
     [],
   );
 
-  const resetMatchPlayersColumns = useCallback(() => {
+  const setMatchPlayerTableColumns = useCallback(
+    (updater: Updater<VisibilityState>) => {
+      const newVisibility =
+        typeof updater === "function"
+          ? updater(currentSettings.matchPlayerTableColumns)
+          : updater;
+      updateSettings({ ...currentSettings, matchPlayerTableColumns: newVisibility });
+    },
+    [],
+  );
+
+  const resetPlayerTableColumns = useCallback(() => {
     updateSettings({
       ...currentSettings,
-      matchPlayersColumns: defaultColumnVisibility,
+      playerTableColumns: defaultColumnVisibility,
     });
   }, []);
 
-  const setLockTeamSort = useCallback((locked: boolean) => {
-    updateSettings({ ...currentSettings, lockTeamSort: locked });
-  }, []);
-
-  const setPageSize = useCallback((size: number) => {
-    updateSettings({ ...currentSettings, pageSize: size });
-  }, []);
-
-  const setPlayerFilterMode = useCallback((mode: PlayerFilterMode) => {
-    updateSettings({ ...currentSettings, playerFilterMode: mode });
+  const resetMatchPlayerTableColumns = useCallback(() => {
+    updateSettings({
+      ...currentSettings,
+      matchPlayerTableColumns: defaultColumnVisibility,
+    });
   }, []);
 
   return (
     <TableSettingsContext.Provider
       value={{
-        resetMatchPlayersColumns,
-        setLockTeamSort,
-        setMatchPlayersColumns,
-        setPlayerFilterMode,
-        setPageSize,
+        resetMatchPlayerTableColumns,
+        resetPlayerTableColumns,
+        setMatchPlayerTableColumns,
+        setPlayerTableColumns,
         settings,
       }}
     >

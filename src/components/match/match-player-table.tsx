@@ -1,8 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import {
-  ColumnFiltersState,
   SortingState,
   flexRender,
   getCoreRowModel,
@@ -11,11 +10,10 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import {
-  Lock,
-  LockOpen,
-  Settings2,
-} from "lucide-react";
+import { parseAsBoolean, useQueryState } from "nuqs";
+
+import { useTableState } from "@/hooks/use-table-state";
+import { Lock, LockOpen, Settings2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -39,16 +37,16 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useTableSettings } from "@/providers";
-import { matchPlayersColumns } from "./match-players-columns";
+import { matchPlayerColumns } from "./match-player-columns";
 import {
   columnGroups,
   columnLabels,
   type ColumnGroupItem,
   type ColumnId,
-} from "./match-players-config";
+} from "./match-player-config";
 import type { MatchPlayerDetail } from "@/lib/db/match";
 
-interface MatchPlayersTableProps {
+interface MatchPlayerTableProps {
   minimal?: boolean;
   players: MatchPlayerDetail[];
   team?: "Red" | "Blue" | "Spectator";
@@ -76,12 +74,18 @@ interface ColumnGroupSectionProps {
   table: ReturnType<typeof useReactTable<MatchPlayerDetail>>;
 }
 
-function ColumnGroupSection({ depth = 0, group, table }: ColumnGroupSectionProps) {
+function ColumnGroupSection({
+  depth = 0,
+  group,
+  table,
+}: ColumnGroupSectionProps) {
   // Get all columns for this group (including from subgroups for parent toggle)
   const getAllColumns = (grp: ColumnGroupItem): ColumnId[] => {
     const cols = [...grp.columns];
     if (grp.subgroups) {
-      grp.subgroups.forEach((subgroup) => cols.push(...getAllColumns(subgroup)));
+      grp.subgroups.forEach((subgroup) =>
+        cols.push(...getAllColumns(subgroup)),
+      );
     }
     return cols;
   };
@@ -94,7 +98,8 @@ function ColumnGroupSection({ depth = 0, group, table }: ColumnGroupSectionProps
   if (groupColumns.length === 0 && !group.subgroups?.length) return null;
 
   const visibleCount = groupColumns.filter((col) => col?.getIsVisible()).length;
-  const allVisible = visibleCount === groupColumns.length && groupColumns.length > 0;
+  const allVisible =
+    visibleCount === groupColumns.length && groupColumns.length > 0;
   const someVisible = visibleCount > 0 && visibleCount < groupColumns.length;
 
   const toggleGroup = (checked: boolean) => {
@@ -107,7 +112,10 @@ function ColumnGroupSection({ depth = 0, group, table }: ColumnGroupSectionProps
 
   return (
     <div className="space-y-2">
-      <div className="flex items-center gap-2" style={{ marginLeft: depth * 16 }}>
+      <div
+        className="flex items-center gap-2"
+        style={{ marginLeft: depth * 16 }}
+      >
         <Checkbox
           id={`group-${group.label}`}
           checked={allVisible}
@@ -122,7 +130,10 @@ function ColumnGroupSection({ depth = 0, group, table }: ColumnGroupSectionProps
         </Label>
       </div>
       {directColumns.length > 0 && (
-        <div className="flex flex-col gap-2" style={{ marginLeft: (depth + 1) * 16 + 8 }}>
+        <div
+          className="flex flex-col gap-2"
+          style={{ marginLeft: (depth + 1) * 16 + 8 }}
+        >
           {directColumns.map((column) => {
             if (!column) return null;
             return (
@@ -152,13 +163,11 @@ function ColumnGroupSection({ depth = 0, group, table }: ColumnGroupSectionProps
   );
 }
 
-const PAGE_SIZE = 14;
-
-export function MatchPlayersTable({
+export function MatchPlayerTable({
   players,
   team,
   minimal = false,
-}: MatchPlayersTableProps) {
+}: MatchPlayerTableProps) {
   const styles = team ? getTeamStyles(team) : null;
   const showBothTeams = !team; // Show both Red/Blue when no specific team is set
 
@@ -189,12 +198,12 @@ export function MatchPlayersTable({
   }, [players, team, showBothTeams, winningTeam]);
 
   // No initial sorting - data is pre-sorted by winning team
-  const [sorting, setSorting] = useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const { settings, setMatchPlayersColumns, setLockTeamSort } =
-    useTableSettings();
-  const columnVisibility = settings.matchPlayersColumns;
-  const lockTeamSort = settings.lockTeamSort;
+  const { sorting, setSorting, columnFilters, setColumnFilters, pagination, setPagination } =
+    useTableState({ defaultPageSize: 14 });
+  const [lock = true, setLock] = useQueryState("lock", parseAsBoolean.withDefault(true));
+  const { settings, setMatchPlayerTableColumns } = useTableSettings();
+  const columnVisibility = settings.matchPlayerTableColumns;
+  const lockTeamSort = lock;
 
   // Team sort direction: desc when Blue wins (to put Blue first)
   const teamSort = useMemo(
@@ -212,30 +221,28 @@ export function MatchPlayersTable({
   }, [lockTeamSort, showBothTeams, sorting, teamSort]);
 
   const table = useReactTable({
-    columns: matchPlayersColumns,
+    autoResetPageIndex: false,
+    columns: matchPlayerColumns,
     data: teamPlayers,
     enableMultiSort: true,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    initialState: {
-      pagination: {
-        pageSize: PAGE_SIZE,
-      },
-    },
     onColumnFiltersChange: setColumnFilters,
-    onColumnVisibilityChange: setMatchPlayersColumns,
+    onColumnVisibilityChange: setMatchPlayerTableColumns,
+    onPaginationChange: setPagination,
     onSortingChange: setSorting,
     state: {
       columnFilters,
       columnVisibility,
+      pagination,
       sorting: effectiveSorting,
     },
   });
 
   const totalRows = table.getFilteredRowModel().rows.length;
-  const showPagination = totalRows > PAGE_SIZE;
+  const showPagination = totalRows > pagination.pageSize;
 
   return (
     <div className="space-y-2">
@@ -265,7 +272,7 @@ export function MatchPlayersTable({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setLockTeamSort(!lockTeamSort)}
+                onClick={() => setLock(!lockTeamSort)}
               >
                 {lockTeamSort ? (
                   <>
@@ -371,7 +378,7 @@ export function MatchPlayersTable({
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={matchPlayersColumns.length}
+                  colSpan={matchPlayerColumns.length}
                   className="h-24 text-center"
                 >
                   No results.

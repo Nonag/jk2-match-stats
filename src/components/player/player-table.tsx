@@ -3,8 +3,6 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  ColumnFiltersState,
-  SortingState,
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
@@ -12,6 +10,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
+import { useTableState } from "@/hooks/use-table-state";
 import { Settings2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -41,7 +40,7 @@ import {
   columnLabels,
   type ColumnGroupItem,
   type ColumnId,
-} from "@/components/match/match-players-config";
+} from "@/components/match/match-player-config";
 import { useTableSettings } from "@/providers";
 import { playerListColumns, PlayerColumnId } from "./player-columns";
 import { PlayerDialog } from "./player-dialog";
@@ -141,25 +140,32 @@ function ColumnGroupSection({ depth = 0, group, table }: ColumnGroupSectionProps
   );
 }
 
-const PAGE_SIZE = 10;
-
 export function PlayerTable({ items, loading }: PlayerTableProps) {
   const router = useRouter();
-  const [sorting, setSorting] = useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [selectedItem, setSelectedItem] = useState<PlayerListItem | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  const { settings, setMatchPlayersColumns, setPlayerFilterMode } = useTableSettings();
+  // URL state for table (sorting, filters, pagination)
+  const { sorting, columnFilters, pagination, setSorting, setColumnFilters, setPagination } =
+    useTableState({ defaultPageSize: 10 });
 
-  const columnVisibility = settings.matchPlayersColumns;
-  const playerFilterMode = settings.playerFilterMode;
+  // Get current mode from column filters
+  const mode = useMemo(() => {
+    const modeFilter = columnFilters.find((f) => f.id === "playerType");
+    return (modeFilter?.value as "player" | "matchplayer" | "all") || "all";
+  }, [columnFilters]);
 
-  // Filter items based on playerFilterMode
-  const filteredItems = useMemo(() => {
-    if (playerFilterMode === "all") return items;
-    return items.filter((item) => item.type === playerFilterMode);
-  }, [items, playerFilterMode]);
+  const handleModeChange = (newMode: "all" | "player" | "matchplayer") => {
+    setColumnFilters((prev) => {
+      const filtered = prev.filter((f) => f.id !== "playerType");
+      if (newMode === "all") return filtered;
+      return [...filtered, { id: "playerType", value: newMode }];
+    });
+  };
+
+  // Column visibility from settings (sessionStorage)
+  const { settings, setPlayerTableColumns } = useTableSettings();
+  const columnVisibility = settings.playerTableColumns;
 
   const handleNameClick = (item: PlayerListItem) => {
     setSelectedItem(item);
@@ -178,28 +184,27 @@ export function PlayerTable({ items, loading }: PlayerTableProps) {
   };
 
   const table = useReactTable({
+    autoResetPageIndex: false,
     columns: playerListColumns,
-    data: filteredItems,
+    data: items,
     enableMultiSort: true,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    initialState: {
-      pagination: {
-        pageSize: PAGE_SIZE,
-      },
-    },
+    manualPagination: false,
     meta: {
       onNameClick: handleNameClick,
     },
     onColumnFiltersChange: setColumnFilters,
-    onColumnVisibilityChange: setMatchPlayersColumns,
+    onColumnVisibilityChange: setPlayerTableColumns,
+    onPaginationChange: setPagination,
     onSortingChange: setSorting,
     state: {
-      sorting,
       columnFilters,
-      columnVisibility,
+      columnVisibility: { ...columnVisibility, playerType: false },
+      pagination,
+      sorting,
     },
   });
 
@@ -209,7 +214,7 @@ export function PlayerTable({ items, loading }: PlayerTableProps) {
   };
 
   const totalRows = table.getFilteredRowModel().rows.length;
-  const showPagination = totalRows > PAGE_SIZE;
+  const showPagination = totalRows > pagination.pageSize;
 
   if (loading) {
     return (
@@ -243,23 +248,23 @@ export function PlayerTable({ items, loading }: PlayerTableProps) {
         <div className="flex items-center gap-2">
           <ButtonGroup>
             <Button
-              onClick={() => setPlayerFilterMode("all")}
+              onClick={() => handleModeChange("all")}
               size="sm"
-              variant={playerFilterMode === "all" ? "default" : "outline"}
+              variant={mode === "all" ? "default" : "outline"}
             >
               All
             </Button>
             <Button
-              onClick={() => setPlayerFilterMode("player")}
+              onClick={() => handleModeChange("player")}
               size="sm"
-              variant={playerFilterMode === "player" ? "default" : "outline"}
+              variant={mode === "player" ? "default" : "outline"}
             >
               Players
             </Button>
             <Button
-              onClick={() => setPlayerFilterMode("matchplayer")}
+              onClick={() => handleModeChange("matchplayer")}
               size="sm"
-              variant={playerFilterMode === "matchplayer" ? "default" : "outline"}
+              variant={mode === "matchplayer" ? "default" : "outline"}
             >
               Unassigned
             </Button>
