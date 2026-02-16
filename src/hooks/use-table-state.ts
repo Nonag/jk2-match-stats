@@ -38,6 +38,11 @@ const filtersParser = createParser<ColumnFiltersState>({
 interface UseTableStateConfig {
   defaultPageIndex?: number;
   defaultPageSize?: number;
+  /**
+   * Prefix for URL params to avoid conflicts when multiple tables on same page
+   * e.g., "spec" -> "specPage", "specPageSize", "specSort", "specFilter"
+   */
+  prefix?: string;
 }
 
 /**

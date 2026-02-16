@@ -97,9 +97,9 @@ function ColumnGroupSection({ depth = 0, group, table }: ColumnGroupSectionProps
     <div className="space-y-2">
       <div className="flex items-center gap-2" style={{ marginLeft: depth * 16 }}>
         <Checkbox
-          id={`group-${group.label}`}
           checked={allVisible}
           data-state={someVisible ? "indeterminate" : undefined}
+          id={`group-${group.label}`}
           onCheckedChange={(value) => toggleGroup(!!value)}
         />
         <Label
@@ -116,8 +116,8 @@ function ColumnGroupSection({ depth = 0, group, table }: ColumnGroupSectionProps
             return (
               <div key={column.id} className="flex items-center gap-2">
                 <Checkbox
-                  id={column.id}
                   checked={column.getIsVisible()}
+                  id={column.id}
                   onCheckedChange={(value) => column.toggleVisibility(!!value)}
                 />
                 <Label htmlFor={column.id} className="text-sm cursor-pointer">
@@ -130,10 +130,10 @@ function ColumnGroupSection({ depth = 0, group, table }: ColumnGroupSectionProps
       )}
       {group.subgroups?.map((subgroup) => (
         <ColumnGroupSection
-          key={subgroup.label}
-          group={subgroup}
-          table={table}
           depth={depth + 1}
+          group={subgroup}
+          key={subgroup.label}
+          table={table}
         />
       ))}
     </div>
@@ -248,23 +248,26 @@ export function PlayerTable({ items, loading }: PlayerTableProps) {
         <div className="flex items-center gap-2">
           <ButtonGroup>
             <Button
+              className={cn(mode === "all" && "bg-accent")}
               onClick={() => handleModeChange("all")}
               size="sm"
-              variant={mode === "all" ? "default" : "outline"}
+              variant="outline"
             >
               All
             </Button>
             <Button
+              className={cn(mode === "player" && "bg-accent")}
               onClick={() => handleModeChange("player")}
               size="sm"
-              variant={mode === "player" ? "default" : "outline"}
+              variant="outline"
             >
               Players
             </Button>
             <Button
+              className={cn(mode === "matchplayer" && "bg-accent")}
               onClick={() => handleModeChange("matchplayer")}
               size="sm"
-              variant={mode === "matchplayer" ? "default" : "outline"}
+              variant="outline"
             >
               Unassigned
             </Button>
